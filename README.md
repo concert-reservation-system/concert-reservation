@@ -16,7 +16,7 @@
 | 최유리 | Redis Lettuce 락 구현 및 동시성 이슈 제어 |
 | 김제인 | Redisson FairLock 적용 |
 
-## ⚙️ 기술 스택
+## Tech Stack
 - **Language:** Java 17
 - **Framework:** Spring Boot 3.x
 - **ORM:** Spring Data JPA + QueryDSL
@@ -25,5 +25,5 @@
 - **Security:** Spring Security + JWT
 - **Build Tool:** Gradle
 
-## ERD 설계
+## ERD
 ![스크린샷 2025-03-25 오후 7 55 40](https://github.com/user-attachments/assets/236dafac-8475-4561-833b-ad2519dac25d)
