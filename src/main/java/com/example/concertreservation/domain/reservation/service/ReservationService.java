@@ -1,6 +1,7 @@
 package com.example.concertreservation.domain.reservation.service;
 
 import com.example.concertreservation.common.exception.InvalidRequestException;
+import com.example.concertreservation.common.annotation.RedisLock;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -12,6 +13,7 @@ import com.example.concertreservation.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 
@@ -49,6 +51,24 @@ public class ReservationService {
                 });
 
         reservationRepository.save(new Reservation(user, concert));
+        concert.decreaseAvailableAmount();
+    }
+
+    @Transactional
+    @RedisLock(key = "#concertId")
+    public void createAopReservation(Long concertId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Concert concert = concertRepository.findById(concertId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Concert not found"));
+
+        if (concert.getAvailableAmount() == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Concert has no available amount");
+        }
+
+        Reservation reservation = new Reservation(user, concert);
+        reservationRepository.save(reservation);
         concert.decreaseAvailableAmount();
     }
 }
