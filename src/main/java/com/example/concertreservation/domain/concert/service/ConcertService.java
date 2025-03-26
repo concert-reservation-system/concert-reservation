@@ -23,12 +23,14 @@ public class ConcertService {
     public ConcertSaveResponse saveConcert(@Valid ConcertSaveRequest saveRequest) {
 
         // 콘서트 저장
-        Concert newConcert = new Concert(
-                saveRequest.getTitle(),
-                saveRequest.getDescription(),
-                saveRequest.getConcertDate(),
-                saveRequest.getCapacity()
-        );
+        Concert newConcert = Concert.builder()
+                .title(saveRequest.getTitle())
+                .description(saveRequest.getDescription())
+                .concertDate(saveRequest.getConcertDate())
+                .capacity(saveRequest.getCapacity())
+                .availableAmount(saveRequest.getCapacity())
+                .build();
+
         Concert savedConcert = concertRepository.save(newConcert);
 
         // 콘서트 예매 일정 저장
