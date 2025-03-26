@@ -35,8 +35,6 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
