@@ -2,6 +2,7 @@ package com.example.concertreservation.domain.concert.entity;
 
 import com.example.concertreservation.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,13 +21,17 @@ public class Concert extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
     private LocalDateTime concertDate;
-    private Integer capacity;
-    private Integer viewCount = 0;
+    private int capacity;
+    private int availableAmount;
+    private int viewCount = 0;
 
-    public Concert(String title, String description, LocalDateTime concertDate, Integer capacity) {
+    @Builder
+    public Concert(String title, String description, LocalDateTime concertDate, int capacity, int availableAmount, int viewCount) {
         this.title = title;
         this.description = description;
         this.concertDate = concertDate;
         this.capacity = capacity;
+        this.availableAmount = availableAmount;
+        this.viewCount = viewCount;
     }
 }
