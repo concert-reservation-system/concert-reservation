@@ -41,5 +41,8 @@ public class Concert extends BaseTimeEntity {
         this.concertDate = concertDate;
         this.capacity = capacity;
         this.availableAmount = availableAmount;
+
+    public void decreaseAvailableAmount() {
+        this.availableAmount--;
     }
 }
