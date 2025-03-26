@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
-public class ConcertSaveRequest {
+public class ConcertUpdateRequest {
 
     @NotBlank
     private String title;
@@ -27,21 +27,11 @@ public class ConcertSaveRequest {
     @Min(value = 1)
     private int capacity;
 
-    @NotNull
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime startDate;
-
-    @NotNull
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime endDate;
-
     @Builder
-    private ConcertSaveRequest(String title, String description, LocalDateTime concertDate, int capacity, LocalDateTime startDate, LocalDateTime endDate) {
+    private ConcertUpdateRequest(String title, String description, LocalDateTime concertDate, int capacity) {
         this.title = title;
         this.description = description;
         this.concertDate = concertDate;
         this.capacity = capacity;
-        this.startDate = startDate;
-        this.endDate = endDate;
     }
 }
