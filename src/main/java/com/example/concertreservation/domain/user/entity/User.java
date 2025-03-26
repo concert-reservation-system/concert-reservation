@@ -3,6 +3,7 @@ package com.example.concertreservation.domain.user.entity;
 import com.example.concertreservation.common.entity.BaseTimeEntity;
 import com.example.concertreservation.common.enums.UserRole;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,6 +20,7 @@ public class User extends BaseTimeEntity {
     private String password;
     private UserRole userRole;
 
+    @Builder
     public User(String email, String password, UserRole userRole) {
         this.email = email;
         this.password = password;

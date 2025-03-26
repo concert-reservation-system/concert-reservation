@@ -1,8 +1,10 @@
 package com.example.concertreservation.domain.reservation.entity;
 
 import com.example.concertreservation.common.entity.BaseTimeEntity;
+import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +23,12 @@ public class Reservation extends BaseTimeEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reservation_id", nullable = false)
-    private Reservation reservation;
+    @JoinColumn(name = "concert_id", nullable = false)
+    private Concert concert;
+
+    @Builder
+    public Reservation(User user, Concert concert) {
+        this.user = user;
+        this.concert = concert;
+    }
 }
