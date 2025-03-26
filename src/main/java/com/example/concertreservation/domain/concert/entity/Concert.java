@@ -34,4 +34,8 @@ public class Concert extends BaseTimeEntity {
         this.availableAmount = availableAmount;
         this.viewCount = viewCount;
     }
+
+    public void decreaseAvailableAmount() {
+        this.availableAmount--;
+    }
 }
