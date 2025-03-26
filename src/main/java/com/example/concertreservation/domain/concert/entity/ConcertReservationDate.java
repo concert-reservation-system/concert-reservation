@@ -21,4 +21,10 @@ public class ConcertReservationDate extends BaseTimeEntity {
     private Concert concert;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+
+    public ConcertReservationDate(Concert concert, LocalDateTime startDate, LocalDateTime endDate) {
+        this.concert = concert;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 }

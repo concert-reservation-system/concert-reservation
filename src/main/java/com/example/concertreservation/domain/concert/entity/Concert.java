@@ -20,6 +20,13 @@ public class Concert extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
     private LocalDateTime concertDate;
-    private int capacity;
-    private int viewCount = 0;
+    private Integer capacity;
+    private Integer viewCount = 0;
+
+    public Concert(String title, String description, LocalDateTime concertDate, Integer capacity) {
+        this.title = title;
+        this.description = description;
+        this.concertDate = concertDate;
+        this.capacity = capacity;
+    }
 }
