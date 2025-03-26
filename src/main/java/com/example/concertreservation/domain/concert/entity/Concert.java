@@ -35,6 +35,13 @@ public class Concert extends BaseTimeEntity {
         this.viewCount = viewCount;
     }
 
+    public void update(String title, String description, LocalDateTime concertDate, int capacity, int availableAmount) {
+        this.title = title;
+        this.description = description;
+        this.concertDate = concertDate;
+        this.capacity = capacity;
+        this.availableAmount = availableAmount;
+
     public void decreaseAvailableAmount() {
         this.availableAmount--;
     }
