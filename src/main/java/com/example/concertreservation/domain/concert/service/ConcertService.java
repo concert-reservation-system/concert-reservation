@@ -112,4 +112,17 @@ public class ConcertService {
                 reservationDate.getEndDate()
         );
     }
+
+    @Transactional
+    public void deleteConcert(long concertId) {
+        Concert concert = concertRepository.findById(concertId)
+                .orElseThrow(() -> new InvalidRequestException("해당 공연이 존재하지 않습니다."));
+
+        // 콘서트 예매 일정 삭제
+        concertReservationDateRepository.findByConcertId(concertId)
+                .ifPresent(concertReservationDateRepository::delete);
+
+        // 콘서트 삭제
+        concertRepository.delete(concert);
+    }
 }

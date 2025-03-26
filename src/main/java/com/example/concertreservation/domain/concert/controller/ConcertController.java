@@ -44,4 +44,11 @@ public class ConcertController {
         return ResponseEntity.ok(concertService.updateReservationPeriod(concertId, concertReservationPeriodRequest));
     }
 
+    @DeleteMapping("/{concertId}")
+    public ResponseEntity<String> deleteConcert(
+            @PathVariable long concertId
+    ) {
+        concertService.deleteConcert(concertId);
+        return ResponseEntity.ok("콘서트 삭제 성공");
+    }
 }
