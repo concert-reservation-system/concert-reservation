@@ -10,16 +10,15 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @NoArgsConstructor
-@Table(name = "concerts")
-public class Concert extends BaseTimeEntity {
+@Table(name = "concert_reservation_dates")
+public class ConcertReservationDate extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
-    @Column(columnDefinition = "TEXT")
-    private String description;
-    private LocalDateTime concertDate;
-    private int capacity;
-    private int viewCount = 0;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "concert_id", nullable = false, unique = true)
+    private Concert concert;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }
