@@ -1,6 +1,6 @@
 package com.example.concertreservation.domain.reservation.facade;
 
-import com.example.concertreservation.common.fairlock.LockExecutor;
+import com.example.concertreservation.common.fairlock.LockManager;
 import com.example.concertreservation.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReservationLockFacade {
 
-    private final LockExecutor lockExecutor;
+    private final LockManager lockExecutor;
     private final ReservationService reservationService; // 아직 service 구현 안됨
 
     private static final String LOCK_KEY_PREFIX = "concert:reservation:";
