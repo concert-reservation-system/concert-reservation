@@ -22,14 +22,16 @@ public class Concert extends BaseTimeEntity {
     private String description;
     private LocalDateTime concertDate;
     private int capacity;
+    private int availableAmount;
     private int viewCount = 0;
 
     @Builder
-    public Concert(String title, String description, LocalDateTime concertDate, int capacity, int viewCount) {
+    public Concert(String title, String description, LocalDateTime concertDate, int capacity, int availableAmount, int viewCount) {
         this.title = title;
         this.description = description;
         this.concertDate = concertDate;
         this.capacity = capacity;
+        this.availableAmount = availableAmount;
         this.viewCount = viewCount;
     }
 }
