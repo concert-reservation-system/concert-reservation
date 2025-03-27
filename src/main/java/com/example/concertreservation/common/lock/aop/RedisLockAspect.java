@@ -1,5 +1,6 @@
 package com.example.concertreservation.common.lock.aop;
 
+import com.example.concertreservation.common.exception.LockAcquisitionException;
 import com.example.concertreservation.common.lock.aop.annotation.RedisLock;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -33,8 +34,13 @@ public class RedisLockAspect {
         if (lock.tryLock(5L, TimeUnit.SECONDS)) {
             try {
                 return joinPoint.proceed();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new LockAcquisitionException("락 획득 중 인터럽트 발생");
             } finally {
-                lock.unlock();  // 예외처리 추가
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
             }
         } else {
             throw new IllegalStateException("락 획득 실패");
