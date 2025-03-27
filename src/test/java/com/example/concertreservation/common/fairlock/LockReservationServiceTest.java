@@ -41,7 +41,7 @@ class LockReservationServiceConcurrencyTest {
         concertRepository.deleteAll();
 
         Concert concert = Concert.builder()
-                .title("동시성 테스트 콘서트")
+                .title("지디 콘서트")
                 .capacity(1)
                 .availableAmount(1)
                 .build();

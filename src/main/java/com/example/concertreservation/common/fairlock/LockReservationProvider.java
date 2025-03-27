@@ -18,46 +18,34 @@ public class LockReservationProvider {
     private final ConcertRepository concertRepository;
     private final UserRepository userRepository;
 
-    public void createReservation(Long concertId, Long userId) {
-        String lockKey = "concert:reservation:" + concertId;
-        System.out.println("락 획득 시도: concertId=" + concertId + ", userId=" + userId);
+        public void createReservation(Long concertId, Long userId) {
+            Concert concert = concertRepository.findById(concertId)
+                    .orElseThrow(() -> new IllegalStateException("해당 콘서트가 존재하지 않습니다."));
 
-        try {
-            lockManager.executeWithLock(lockKey, () -> processReservation(concertId, userId));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            System.out.println("락 획득 중 인터럽트 발생: " + concertId + ", userId=" + userId);
-            throw new IllegalStateException("락 획득 중 인터럽트 발생: " + concertId, e);
-        }
-    }
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalStateException("해당 사용자가 존재하지 않습니다."));
 
-    private void processReservation(Long concertId, Long userId) {
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> {
-                    System.out.println("해당 콘서트가 존재하지 않습니다: concertId=" + concertId);
-                    return new IllegalStateException("해당 콘서트가 존재하지 않습니다.");
-                });
-        System.out.println("콘서트 정보 확인: concertId=" + concertId);
+            String lockKey = "concert:reservation:" + concertId;
+            System.out.println("락 획득 시도: concertId=" + concertId + ", userId=" + userId);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> {
-                    System.out.println("해당 사용자가 존재하지 않습니다: userId=" + userId);
-                    return new IllegalStateException("해당 사용자가 존재하지 않습니다.");
-                });
-        System.out.println("유저 정보 확인: userId=" + userId);
-
-        long currentReservations = reservationRepository.countByConcertId(concertId);
-        System.out.println("현재 예약 수량: " + currentReservations + ", 콘서트 용량: " + concert.getCapacity());
-
-        if (currentReservations >= concert.getCapacity()) {
-            System.out.println("예약 수량 초과: concertId=" + concertId);
-            throw new IllegalStateException("예약 수량이 초과하였습니다.");
+            try {
+                lockManager.executeWithLock(lockKey, () -> makeReservation(concert, user));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("락 획득 중 인터럽트 발생: " + concertId, e);
+            }
         }
 
-        Reservation reservation = new Reservation();
-        reservation.setUser(user);
-        reservation.setConcert(concert);
-        reservationRepository.save(reservation);
-        System.out.println("예약 완료: concertId=" + concertId + ", userId=" + userId);
+        private void makeReservation(Concert concert, User user) {
+            long currentReservations = reservationRepository.countByConcertId(concert.getId());
+            if (currentReservations >= concert.getCapacity()) {
+                throw new IllegalStateException("예약 수량이 초과하였습니다.");
+            }
+
+            Reservation reservation = new Reservation();
+            reservation.setUser(user);
+            reservation.setConcert(concert);
+            reservationRepository.save(reservation);
+            System.out.println("예약 완료: concertId=" + concert.getId() + ", userId=" + user.getId());
+        }
     }
-}

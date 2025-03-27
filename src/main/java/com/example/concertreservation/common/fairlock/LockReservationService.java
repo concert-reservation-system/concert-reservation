@@ -22,7 +22,7 @@ public class LockReservationService {
                     System.out.println("람다 내부 진입: userId=" + userId);
                     ReservationTransactionalFacade facade =
                             applicationContext.getBean(ReservationTransactionalFacade.class);
-                    facade.reserveWithTransaction(concertId, userId);
+                    facade.reserveWithTransaction(concertId, userId); // 개선
                     System.out.println("람다 내부 정상 종료: userId=" + userId);
                 } catch (Exception e) {
                     System.out.println("람다 내부 예외 발생: " + e.getMessage());
