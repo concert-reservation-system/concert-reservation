@@ -17,13 +17,10 @@
 | 김제인 | Redisson FairLock 적용 |
 
 ## Tech Stack
-- **Language:** Java 17
-- **Framework:** Spring Boot 3.x
-- **ORM:** Spring Data JPA + QueryDSL
-- **DB:** MySQL
-- **Cache/Lock:** Redis (Lettuce, Redisson)
-- **Security:** Spring Security + JWT
-- **Build Tool:** Gradle
+<img src="https://img.shields.io/badge/java-007396?style=flat-square&logo=java&logoColor=white"/>
+<img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/>
+<img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/>
+<img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/>
 
 ## ERD
 ![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
