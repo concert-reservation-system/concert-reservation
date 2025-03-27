@@ -13,7 +13,6 @@ public class LockRedissonManager implements LockManager {
 
     private final RedissonClient redissonClient;
     private static final String LOCK_KEY_PREFIX = "concert-reservation-lock:";
-
     private static final long WAIT_TIME = 10;
     private static final long LEASE_TIME = 2;
 

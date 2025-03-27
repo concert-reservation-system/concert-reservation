@@ -16,20 +16,11 @@ public class LockReservationService {
         String lockKey = "concert:reservation:" + concertId;
 
         try {
-            System.out.println("락 획득 시도: concertId=" + concertId + ", userId=" + userId);
             lockManager.executeWithLock(lockKey, () -> {
-                try {
-                    System.out.println("람다 내부 진입: userId=" + userId);
-                    reservationTransactionalFacade.reserveWithTransaction(concertId, userId);
-                    System.out.println("람다 내부 정상 종료: userId=" + userId);
-                } catch (Exception e) {
-                    System.out.println("람다 내부 예외 발생: " + e.getMessage());
-                    e.printStackTrace();
-                }
+                reservationTransactionalFacade.reserveWithTransaction(concertId, userId);
             });
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("락 획득 중 인터럽트 발생: " + concertId + ", userId=" + userId);
             throw new IllegalStateException("락 획득 중 인터럽트 발생: " + concertId, e);
         }
     }
