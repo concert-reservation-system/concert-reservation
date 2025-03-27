@@ -44,6 +44,10 @@ public class Concert extends BaseTimeEntity {
     }
 
     public void decreaseAvailableAmount() {
-        this.availableAmount--;
+        if (this.availableAmount <= 0) {
+            String errorMessage = "잔여 수량이 없습니다.";
+            throw new IllegalStateException(errorMessage);
+        }
+        this.availableAmount -= 1;
     }
 }
