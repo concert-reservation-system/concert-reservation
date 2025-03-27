@@ -1,7 +1,6 @@
-package com.example.concertreservation.common.aop;
+package com.example.concertreservation.common.lock.aop;
 
-import com.example.concertreservation.common.annotation.RedisLock;
-import com.example.concertreservation.common.exception.InvalidRequestException;
+import com.example.concertreservation.common.lock.aop.annotation.RedisLock;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -21,7 +20,7 @@ public class RedisLockAspect {
 
     private final RedissonClient redissonClient;
 
-    @Around("@annotation(com.example.concertreservation.common.annotation.RedisLock)")
+    @Around("@annotation(com.example.concertreservation.common.lock.aop.annotation.RedisLock)")
     public Object aopLock(ProceedingJoinPoint joinPoint) throws Throwable {
 
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

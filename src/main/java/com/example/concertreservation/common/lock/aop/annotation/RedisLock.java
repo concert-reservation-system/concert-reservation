@@ -1,4 +1,4 @@
-package com.example.concertreservation.common.annotation;
+package com.example.concertreservation.common.lock.aop.annotation;
 
 import java.lang.annotation.*;
 

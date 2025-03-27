@@ -1,7 +1,7 @@
 package com.example.concertreservation.domain.reservation.service;
 
 import com.example.concertreservation.common.exception.InvalidRequestException;
-import com.example.concertreservation.common.annotation.RedisLock;
+import com.example.concertreservation.common.lock.aop.annotation.RedisLock;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;

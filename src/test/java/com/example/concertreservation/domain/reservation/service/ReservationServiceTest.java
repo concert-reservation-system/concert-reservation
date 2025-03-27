@@ -1,12 +1,10 @@
 package com.example.concertreservation.domain.reservation.service;
 
 import com.example.concertreservation.common.enums.UserRole;
-import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
-import com.example.concertreservation.domain.reservation.facade.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
@@ -15,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

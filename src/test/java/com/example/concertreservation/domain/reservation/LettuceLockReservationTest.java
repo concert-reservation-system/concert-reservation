@@ -5,7 +5,7 @@ import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
-import com.example.concertreservation.domain.reservation.facade.LettuceLockReservationFacade;
+import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;

@@ -1,6 +1,5 @@
-package com.example.concertreservation.domain.reservation.facade;
+package com.example.concertreservation.common.lock.lettuce;
 
-import com.example.concertreservation.domain.reservation.repository.RedisLockRepository;
 import com.example.concertreservation.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
