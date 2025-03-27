@@ -1,12 +1,12 @@
-package com.example.concertreservation.domain.reservation;
+package com.example.concertreservation.domain.reservation.blockingqueue;
 
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
-import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
+import com.example.concertreservation.domain.reservation.service.ReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -18,18 +18,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-public class LettuceLockReservationTest {
+public class ReservationQueueServiceTest {
 
-    @Autowired
-    private LettuceLockReservationFacade lettuceLockReservationFacade;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
@@ -38,6 +34,8 @@ public class LettuceLockReservationTest {
     private ConcertReservationDateRepository concertReservationDateRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ReservationService reservationService;
 
     public static final int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
@@ -82,7 +80,14 @@ public class LettuceLockReservationTest {
 
     @Test
     public void 동시에_콘서트_예매_요청() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        // 대기열(BlockingQueue)을 사용하여 요청 처리
+        ExecutorService executorService = new ThreadPoolExecutor(
+                10, // 코어 스레드 개수
+                10, // 최대 스레드 개수
+                60L, // 유휴 스레드 유지 시간
+                TimeUnit.SECONDS, // 시간 단위
+                new LinkedBlockingQueue<>()); // 작업 대기열
+
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
@@ -90,9 +95,7 @@ public class LettuceLockReservationTest {
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    lettuceLockReservationFacade.create(concert.getId(), (long) count.getAndIncrement());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    reservationService.createReservation(concert.getId(), (long) count.getAndIncrement());
                 } finally {
                     latch.countDown();
                 }
@@ -102,10 +105,9 @@ public class LettuceLockReservationTest {
         executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());
+        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
     }
-
 }

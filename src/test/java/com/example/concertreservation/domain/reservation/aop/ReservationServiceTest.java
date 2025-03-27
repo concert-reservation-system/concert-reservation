@@ -1,4 +1,4 @@
-package com.example.concertreservation.domain.reservation;
+package com.example.concertreservation.domain.reservation.aop;
 
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.entity.Concert;
@@ -18,29 +18,32 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class ReservationQueueServiceTest {
+class ReservationServiceTest {
 
+    @Autowired
+    private ReservationService reservationService;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
     private ConcertRepository concertRepository;
     @Autowired
-    private ConcertReservationDateRepository concertReservationDateRepository;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
-    private ReservationService reservationService;
+    private ConcertReservationDateRepository concertReservationDateRepository;
 
-    public static final int CAPACITY = 100;
+    public static int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
 
     private Concert concert;
+    private User user;
 
     @BeforeEach
     public void setUp() {
@@ -79,15 +82,8 @@ public class ReservationQueueServiceTest {
     }
 
     @Test
-    public void 동시에_콘서트_예매_요청() throws InterruptedException {
-        // 대기열(BlockingQueue)을 사용하여 요청 처리
-        ExecutorService executorService = new ThreadPoolExecutor(
-                10, // 코어 스레드 개수
-                100, // 최대 스레드 개수
-                60L, // 유휴 스레드 유지 시간
-                TimeUnit.SECONDS, // 시간 단위
-                new LinkedBlockingQueue<>()); // 작업 대기열
-
+    void createAopReservation() throws InterruptedException{
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
@@ -95,7 +91,7 @@ public class ReservationQueueServiceTest {
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    reservationService.createReservation(concert.getId(), (long) count.getAndIncrement());
+                    reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
                 } finally {
                     latch.countDown();
                 }
