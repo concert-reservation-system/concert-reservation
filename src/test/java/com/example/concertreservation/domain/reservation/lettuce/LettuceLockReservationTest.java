@@ -1,12 +1,11 @@
-package com.example.concertreservation.domain.reservation.service;
+package com.example.concertreservation.domain.reservation.lettuce;
 
 import com.example.concertreservation.common.enums.UserRole;
-import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
-import com.example.concertreservation.domain.reservation.facade.LettuceLockReservationFacade;
+import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,27 +23,26 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class ReservationServiceTest {
+public class LettuceLockReservationTest {
 
     @Autowired
-    private ReservationService reservationService;
+    private LettuceLockReservationFacade lettuceLockReservationFacade;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
     private ConcertRepository concertRepository;
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
     private ConcertReservationDateRepository concertReservationDateRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    public static int CAPACITY = 100;
+    public static final int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
 
     private Concert concert;
-    private User user;
 
     @BeforeEach
     public void setUp() {
@@ -84,8 +81,8 @@ class ReservationServiceTest {
     }
 
     @Test
-    void createAopReservation() throws InterruptedException{
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+    public void 동시에_콘서트_예매_요청() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
@@ -93,7 +90,9 @@ class ReservationServiceTest {
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
+                    lettuceLockReservationFacade.create(concert.getId(), (long) count.getAndIncrement());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     latch.countDown();
                 }
@@ -103,9 +102,10 @@ class ReservationServiceTest {
         executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());
+        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
     }
+
 }

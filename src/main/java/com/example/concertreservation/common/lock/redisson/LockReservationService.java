@@ -1,9 +1,7 @@
-package com.example.concertreservation.common.fairlock;
+package com.example.concertreservation.common.lock.redisson;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import org.springframework.context.ApplicationContext;
 
 @Service
 @RequiredArgsConstructor

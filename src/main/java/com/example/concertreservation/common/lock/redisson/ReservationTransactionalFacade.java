@@ -1,4 +1,4 @@
-package com.example.concertreservation.common.fairlock;
+package com.example.concertreservation.common.lock.redisson;
 
 import com.example.concertreservation.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
