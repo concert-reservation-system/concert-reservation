@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationContext;
 public class LockReservationService {
 
     private final LockManager lockManager;
-    private final ApplicationContext applicationContext;
+    private final ReservationTransactionalFacade reservationTransactionalFacade;
 
     public void executeWithLock(Long concertId, Long userId) {
         String lockKey = "concert:reservation:" + concertId;
@@ -20,9 +20,7 @@ public class LockReservationService {
             lockManager.executeWithLock(lockKey, () -> {
                 try {
                     System.out.println("람다 내부 진입: userId=" + userId);
-                    ReservationTransactionalFacade facade =
-                            applicationContext.getBean(ReservationTransactionalFacade.class);
-                    facade.reserveWithTransaction(concertId, userId); // 개선
+                    reservationTransactionalFacade.reserveWithTransaction(concertId, userId);
                     System.out.println("람다 내부 정상 종료: userId=" + userId);
                 } catch (Exception e) {
                     System.out.println("람다 내부 예외 발생: " + e.getMessage());
