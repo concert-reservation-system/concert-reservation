@@ -4,15 +4,24 @@ import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.domain.concert.dto.request.ConcertReservationPeriodRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertUpdateRequest;
-import com.example.concertreservation.domain.concert.dto.response.ConcertResponse;
-import com.example.concertreservation.domain.concert.dto.response.ConcertSaveResponse;
+import com.example.concertreservation.domain.concert.dto.response.*;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +30,10 @@ public class ConcertService {
 
     private final ConcertRepository concertRepository;
     private final ConcertReservationDateRepository concertReservationDateRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ConcertCacheService concertCacheService;
 
+    @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
     public ConcertSaveResponse saveConcert(ConcertSaveRequest saveRequest) {
 
@@ -55,10 +67,10 @@ public class ConcertService {
         );
     }
 
+    @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
-    public ConcertResponse updateConcert(long concertId, ConcertUpdateRequest concertUpdateRequest) {
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 공연이 존재하지 않습니다."));
+    public ConcertResponse updateConcert(Long concertId, ConcertUpdateRequest concertUpdateRequest) {
+        Concert concert = getConcertOrThrow(concertId);
 
         int oldCapacity = concert.getCapacity();
         int newCapacity = concertUpdateRequest.getCapacity();
@@ -89,13 +101,10 @@ public class ConcertService {
     }
 
     @Transactional
-    public ConcertSaveResponse updateReservationPeriod(long concertId, ConcertReservationPeriodRequest concertReservationPeriodRequest) {
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 공연이 존재하지 않습니다."));
+    public ConcertSaveResponse updateReservationPeriod(Long concertId, ConcertReservationPeriodRequest concertReservationPeriodRequest) {
+        Concert concert = getConcertOrThrow(concertId);
 
-        ConcertReservationDate reservationDate = concertReservationDateRepository
-                .findByConcertId(concert.getId())
-                .orElseThrow(() -> new InvalidRequestException("해당 공연의 예매 일정이 존재하지 않습니다."));
+        ConcertReservationDate reservationDate = getReservationDateOrThrow(concertId);
 
         reservationDate.update(
                 concertReservationPeriodRequest.getStartDate(),
@@ -113,10 +122,10 @@ public class ConcertService {
         );
     }
 
+    @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
-    public void deleteConcert(long concertId) {
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 공연이 존재하지 않습니다."));
+    public void deleteConcert(Long concertId) {
+        Concert concert = getConcertOrThrow(concertId);
 
         // 콘서트 예매 일정 삭제
         concertReservationDateRepository.findByConcertId(concertId)
@@ -124,5 +133,70 @@ public class ConcertService {
 
         // 콘서트 삭제
         concertRepository.delete(concert);
+    }
+
+    public ConcertDetailResponse getConcert(Long concertId) {
+        ConcertReservationDate reservationDate = concertReservationDateRepository
+                .findByConcertIdWithConcert(concertId)
+                .orElseThrow(() -> new InvalidRequestException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
+
+        Concert concert = reservationDate.getConcert();
+
+        String redisKey = "concert:view:" + concertId;
+        Long redisViewCount = redisTemplate.opsForValue().increment(redisKey);
+        int additionalViews = (redisViewCount != null) ? redisViewCount.intValue() : 0;
+        int totalViewCount = concert.getViewCount() + additionalViews;
+
+        return new ConcertDetailResponse(
+                concert.getId(),
+                concert.getTitle(),
+                concert.getDescription(),
+                concert.getConcertDate(),
+                concert.getCapacity(),
+                concert.getAvailableAmount(),
+                totalViewCount,
+                reservationDate.getStartDate(),
+                reservationDate.getEndDate()
+        );
+    }
+
+    public Page<ConcertSummaryResponse> getConcerts(
+            int page, int size, String keyword,
+            LocalDateTime fromDate, LocalDateTime toDate
+    ) {
+        Page<ConcertSummaryWithoutView> concertWithoutViews =
+                concertCacheService.getCachedConcertList(page, size, keyword, fromDate, toDate);
+
+        List<ConcertSummaryResponse> concertList = concertWithoutViews.getContent().stream()
+                .map(concert -> {
+                    String redisKey = "concert:view:" + concert.getId();
+                    String redisCount = redisTemplate.opsForValue().get(redisKey);
+                    int currentViewCount = concertRepository.findViewCountById(concert.getId());
+
+                    int viewCount = redisCount != null
+                            ? Integer.parseInt(redisCount) + currentViewCount
+                            : currentViewCount;
+
+                    return new ConcertSummaryResponse(
+                            concert.getId(),
+                            concert.getTitle(),
+                            concert.getConcertDate(),
+                            viewCount
+                    );
+                })
+                .toList();
+
+        return new PageImpl<>(concertList, concertWithoutViews.getPageable(), concertWithoutViews.getTotalElements());
+    }
+
+    private Concert getConcertOrThrow(Long concertId) {
+        return concertRepository.findById(concertId)
+                .orElseThrow(() -> new InvalidRequestException("해당 콘서트가 존재하지 않습니다."));
+    }
+
+    private ConcertReservationDate getReservationDateOrThrow(Long concertId) {
+        return concertReservationDateRepository
+                .findByConcertId(concertId)
+                .orElseThrow(() -> new InvalidRequestException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
     }
 }
