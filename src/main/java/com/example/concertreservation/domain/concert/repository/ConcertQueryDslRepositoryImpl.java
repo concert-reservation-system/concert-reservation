@@ -1,7 +1,6 @@
 package com.example.concertreservation.domain.concert.repository;
 
 import com.example.concertreservation.domain.concert.dto.response.ConcertSummaryResponse;
-import com.example.concertreservation.domain.concert.dto.response.ConcertSummaryWithoutView;
 import com.example.concertreservation.domain.concert.entity.QConcert;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
@@ -11,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -22,10 +20,9 @@ import java.util.List;
 public class ConcertQueryDslRepositoryImpl implements ConcertQueryDslRepository {
 
     private final JPAQueryFactory queryFactory;
-    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
-    public Page<ConcertSummaryWithoutView> searchConcerts(Pageable pageable, String keyword, LocalDateTime fromDate, LocalDateTime toDate) {
+    public Page<ConcertSummaryResponse> searchConcerts(Pageable pageable, String keyword, LocalDateTime fromDate, LocalDateTime toDate) {
         QConcert concert = QConcert.concert;
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -39,12 +36,13 @@ public class ConcertQueryDslRepositoryImpl implements ConcertQueryDslRepository 
             builder.and(concert.concertDate.loe(toDate));
         }
 
-        List<ConcertSummaryWithoutView> content = queryFactory
+        List<ConcertSummaryResponse> content = queryFactory
                 .select(Projections.constructor(
-                        ConcertSummaryWithoutView.class,
+                        ConcertSummaryResponse.class,
                         concert.id,
                         concert.title,
-                        concert.concertDate
+                        concert.concertDate,
+                        concert.viewCount
                 ))
                 .from(concert)
                 .where(builder)

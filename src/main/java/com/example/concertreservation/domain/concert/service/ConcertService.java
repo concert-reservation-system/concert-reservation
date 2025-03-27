@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +29,6 @@ public class ConcertService {
     private final ConcertRepository concertRepository;
     private final ConcertReservationDateRepository concertReservationDateRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    private final ConcertCacheService concertCacheService;
 
     @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
@@ -160,33 +157,16 @@ public class ConcertService {
         );
     }
 
+    @Cacheable(
+            value = "concertList",
+            key = "T(com.example.concertreservation.domain.concert.util.CacheKeyGenerator).generateConcertListKey(#page, #size, #keyword, #fromDate, #toDate)"
+    )
     public Page<ConcertSummaryResponse> getConcerts(
             int page, int size, String keyword,
             LocalDateTime fromDate, LocalDateTime toDate
     ) {
-        Page<ConcertSummaryWithoutView> concertWithoutViews =
-                concertCacheService.getCachedConcertList(page, size, keyword, fromDate, toDate);
-
-        List<ConcertSummaryResponse> concertList = concertWithoutViews.getContent().stream()
-                .map(concert -> {
-                    String redisKey = "concert:view:" + concert.getId();
-                    String redisCount = redisTemplate.opsForValue().get(redisKey);
-                    int currentViewCount = concertRepository.findViewCountById(concert.getId());
-
-                    int viewCount = redisCount != null
-                            ? Integer.parseInt(redisCount) + currentViewCount
-                            : currentViewCount;
-
-                    return new ConcertSummaryResponse(
-                            concert.getId(),
-                            concert.getTitle(),
-                            concert.getConcertDate(),
-                            viewCount
-                    );
-                })
-                .toList();
-
-        return new PageImpl<>(concertList, concertWithoutViews.getPageable(), concertWithoutViews.getTotalElements());
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return concertRepository.searchConcerts(pageable, keyword, fromDate, toDate);
     }
 
     private Concert getConcertOrThrow(Long concertId) {
