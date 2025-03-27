@@ -11,6 +11,7 @@ import com.example.concertreservation.domain.reservation.repository.ReservationR
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,17 +59,29 @@ public class ReservationService {
     @RedisLock(key = "#concertId")
     public void createAopReservation(Long concertId, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new InvalidRequestException("해당 유저가 존재하지 않습니다."+concertId));
 
         Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Concert not found"));
+                .orElseThrow(() -> new InvalidRequestException("해당 콘서트가 존재하지 않습니다."));
 
-        if (concert.getAvailableAmount() == 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Concert has no available amount");
+        ConcertReservationDate reservationDate = concertReservationDateRepository
+                .findByConcertId(concert.getId())
+                .orElseThrow(() -> new InvalidRequestException("해당 공연의 예매 일정이 존재하지 않습니다."));
+
+        if (reservationDate.getStartDate().isAfter(LocalDateTime.now()) || reservationDate.getEndDate().isBefore(LocalDateTime.now())) {
+            throw new InvalidRequestException("콘서트 예약 기간이 아닙니다.");
         }
 
-        Reservation reservation = new Reservation(user, concert);
-        reservationRepository.save(reservation);
+        if (concert.getAvailableAmount() == 0) {
+            throw new InvalidRequestException("잔여 좌석이 없습니다.");
+        }
+
+        reservationRepository.findByUserIdAndConcertId(userId, concertId)
+                .ifPresent(reservation -> {
+                    throw new InvalidRequestException("이미 예약한 콘서트입니다.");
+                });
+
+        reservationRepository.save(new Reservation(user, concert));
         concert.decreaseAvailableAmount();
     }
 }
