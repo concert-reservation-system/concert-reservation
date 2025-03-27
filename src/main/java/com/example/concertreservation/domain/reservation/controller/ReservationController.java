@@ -20,11 +20,6 @@ public class ReservationController {
     // 콘서트 예약 등록
     @PostMapping("/{concertId}")
     public ResponseEntity<String> createReservation(@PathVariable Long concertId, @AuthenticationPrincipal AuthUser authUser) {
-        // 로그인 검증
-        if (authUser == null) {
-            return ResponseEntity.status(403).body("로그인이 필요합니다.");
-        }
-
         // 예약 실행
         Long userId = authUser.getId();
         reservationService.createReservation(concertId, userId);
