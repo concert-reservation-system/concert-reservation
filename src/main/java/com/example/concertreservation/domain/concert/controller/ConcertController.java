@@ -1,5 +1,6 @@
 package com.example.concertreservation.domain.concert.controller;
 
+import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.dto.request.ConcertReservationPeriodRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
@@ -14,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/concerts")
@@ -59,8 +62,11 @@ public class ConcertController {
     }
 
     @GetMapping("/{concertId}")
-    public ResponseEntity<ConcertDetailResponse> getConcert(@PathVariable long concertId) {
-        return ResponseEntity.ok(concertService.getConcert(concertId));
+    public ResponseEntity<ConcertDetailResponse> getConcert(
+            @PathVariable long concertId,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        return ResponseEntity.ok(concertService.getConcert(concertId, authUser));
     }
 
     @GetMapping()
@@ -72,5 +78,12 @@ public class ConcertController {
             @RequestParam(required = false) LocalDateTime toDate
     ) {
         return ResponseEntity.ok(concertService.getConcerts(page, size, keyword, fromDate, toDate));
+    }
+
+    @GetMapping("/popular")
+    public ResponseEntity<List<ConcertSummaryResponse>> getPopularConcerts(
+            @RequestParam(defaultValue = "3") int top
+    ) {
+        return ResponseEntity.ok(concertService.getPopularConcerts(top));
     }
 }

@@ -21,7 +21,7 @@ public class ViewCountSyncScheduler {
 
     @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
-    @Scheduled(fixedRate = 300_000) // 5분에 한번
+    @Scheduled(cron = "0 0 0 * * *") // 매일 자정
     public void flushViewCountToDB() {
         Set<String> keys = redisTemplate.keys("concert:view:*");
 
@@ -43,6 +43,7 @@ public class ViewCountSyncScheduler {
                 concertRepository.updateViewCount(concertId, totalViewCount);
 
                 redisTemplate.delete(key);
+                redisTemplate.delete("concert:view:ranking");
                 log.info("조회수 DB 반영 완료 - concertId: {}, viewCount: {}", concertId, totalViewCount);
             } catch (Exception e) {
                 log.error("조회수 DB 반영 실패 - key: {}", key, e);

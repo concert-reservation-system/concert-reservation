@@ -41,14 +41,13 @@ public class ConcertQueryDslRepositoryImpl implements ConcertQueryDslRepository 
                         ConcertSummaryResponse.class,
                         concert.id,
                         concert.title,
-                        concert.concertDate,
-                        concert.viewCount
+                        concert.concertDate
                 ))
                 .from(concert)
                 .where(builder)
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(concert.viewCount.desc())
+                .orderBy(concert.concertDate.asc())
                 .fetch();
 
         Long totalCount = queryFactory

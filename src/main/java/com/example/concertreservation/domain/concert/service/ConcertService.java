@@ -1,5 +1,6 @@
 package com.example.concertreservation.domain.concert.service;
 
+import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.domain.concert.dto.request.ConcertReservationPeriodRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
@@ -20,6 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -132,17 +137,29 @@ public class ConcertService {
         concertRepository.delete(concert);
     }
 
-    public ConcertDetailResponse getConcert(Long concertId) {
+    public ConcertDetailResponse getConcert(Long concertId, AuthUser authUser) {
         ConcertReservationDate reservationDate = concertReservationDateRepository
                 .findByConcertIdWithConcert(concertId)
                 .orElseThrow(() -> new InvalidRequestException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
 
         Concert concert = reservationDate.getConcert();
 
+        // 로그인 사용자 기준 어뷰징 방지
+        String userViewKey = "concert:view:user:" + concertId + ":" + authUser.getId();
+        boolean alreadyViewed = Boolean.TRUE.equals(redisTemplate.hasKey(userViewKey));
+
         String redisKey = "concert:view:" + concertId;
-        Long redisViewCount = redisTemplate.opsForValue().increment(redisKey);
-        int additionalViews = (redisViewCount != null) ? redisViewCount.intValue() : 0;
-        int totalViewCount = concert.getViewCount() + additionalViews;
+        if (!alreadyViewed) {
+            redisTemplate.opsForValue().increment(redisKey);
+            redisTemplate.opsForValue().set(userViewKey, "1", 12, TimeUnit.HOURS);
+            redisTemplate.opsForZSet().incrementScore("concert:view:ranking", concertId.toString(), 1);
+        }
+
+        int redisViewCount = Optional.ofNullable(redisTemplate.opsForValue().get(redisKey))
+                .map(Integer::parseInt)
+                .orElse(0);
+
+        int totalViewCount = concert.getViewCount() + redisViewCount;
 
         return new ConcertDetailResponse(
                 concert.getId(),
@@ -167,6 +184,33 @@ public class ConcertService {
     ) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return concertRepository.searchConcerts(pageable, keyword, fromDate, toDate);
+    }
+
+    public List<ConcertSummaryResponse> getPopularConcerts(int top) {
+        Set<String> concertIdSet = redisTemplate.opsForZSet()
+                .reverseRange("concert:view:ranking", 0, top - 1);
+
+        if (concertIdSet == null || concertIdSet.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> concertIds = concertIdSet.stream()
+                .map(Long::parseLong)
+                .toList();
+
+        List<Concert> concerts = concertRepository.findAllById(concertIds);
+
+        Map<Long, Concert> concertMap = concerts.stream()
+                .collect(Collectors.toMap(Concert::getId, Function.identity()));
+
+        return concertIds.stream()
+                .map(id -> {
+                    Concert c = concertMap.get(id);
+                    return new ConcertSummaryResponse(
+                            c.getId(), c.getTitle(), c.getConcertDate()
+                    );
+                })
+                .toList();
     }
 
     private Concert getConcertOrThrow(Long concertId) {

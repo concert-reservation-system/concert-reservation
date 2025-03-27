@@ -10,12 +10,10 @@ public class ConcertSummaryResponse implements Serializable {
     private final Long id;
     private final String title;
     private final LocalDateTime concertDate;
-    private final int viewCount;
 
-    public ConcertSummaryResponse(Long id, String title, LocalDateTime concertDate, int viewCount) {
+    public ConcertSummaryResponse(Long id, String title, LocalDateTime concertDate) {
         this.id = id;
         this.title = title;
         this.concertDate = concertDate;
-        this.viewCount = viewCount;
     }
 }
