@@ -1,4 +1,4 @@
-package com.example.concertreservation.domain.reservation.pessimistic;
+package com.example.concertreservation.lock.pessimistic;
 
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.entity.Concert;

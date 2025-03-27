@@ -1,4 +1,4 @@
-package com.example.concertreservation.domain.reservation.aop;
+package com.example.concertreservation.lock.optimistic;
 
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.entity.Concert;
@@ -6,7 +6,7 @@ import com.example.concertreservation.domain.concert.entity.ConcertReservationDa
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
-import com.example.concertreservation.domain.reservation.service.ReservationService;
+import com.example.concertreservation.common.lock.optimistic.OptimisticReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -23,27 +23,27 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-class ReservationServiceTest {
-
-    @Autowired
-    private ReservationService reservationService;
+public class OptimisticReservationTest {
+    // 낙관적 락 (Optimistic Lock)
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
     private ConcertRepository concertRepository;
     @Autowired
+    private ConcertReservationDateRepository concertReservationDateRepository;
+    @Autowired
     private UserRepository userRepository;
     @Autowired
-    private ConcertReservationDateRepository concertReservationDateRepository;
+    private OptimisticReservationService optimisticReservationService;
 
-    public static int CAPACITY = 100;
+    public static final int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
 
     private Concert concert;
-    private User user;
 
     @BeforeEach
     public void setUp() {
@@ -82,16 +82,20 @@ class ReservationServiceTest {
     }
 
     @Test
-    void createAopReservation() throws InterruptedException{
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+    public void 동시에_콘서트_예매_요청() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
-        AtomicInteger count = new AtomicInteger(1);
+        AtomicInteger userCount = new AtomicInteger(1);
+        AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
+                    optimisticReservationService.createReservation(concert.getId(), (long) userCount.getAndIncrement());
+                } catch (Exception e) {
+                    // 낙관적 락 충돌 발생 시 처리 및 예외 카운트 증가
+                    optimisticLockExceptionCount.incrementAndGet();
                 } finally {
                     latch.countDown();
                 }
@@ -101,9 +105,12 @@ class ReservationServiceTest {
         executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
+        assertTrue(optimisticLockExceptionCount.get() > 0);
         assertEquals(0, updatedConcert.getAvailableAmount());
+
+        System.out.println("*** 낙관적 락 발생한 예외 수: " + optimisticLockExceptionCount.get());
+        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
     }
 }
