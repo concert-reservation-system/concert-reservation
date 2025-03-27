@@ -10,6 +10,7 @@ import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
+import com.example.concertreservation.domain.concert.util.RedisKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -145,14 +146,14 @@ public class ConcertService {
         Concert concert = reservationDate.getConcert();
 
         // 로그인 사용자 기준 어뷰징 방지
-        String userViewKey = "concert:view:user:" + concertId + ":" + authUser.getId();
+        String userViewKey = RedisKey.CONCERT_USER_VIEW + concertId + ":" + authUser.getId();
         boolean alreadyViewed = Boolean.TRUE.equals(redisTemplate.hasKey(userViewKey));
 
-        String redisKey = "concert:view:" + concertId;
+        String redisKey = RedisKey.CONCERT_VIEW_COUNT + concertId;
         if (!alreadyViewed) {
             redisTemplate.opsForValue().increment(redisKey);
             redisTemplate.opsForValue().set(userViewKey, "1", 12, TimeUnit.HOURS);
-            redisTemplate.opsForZSet().incrementScore("concert:view:ranking", concertId.toString(), 1);
+            redisTemplate.opsForZSet().incrementScore(RedisKey.CONCERT_VIEW_RANKING, concertId.toString(), 1);
         }
 
         int redisViewCount = Optional.ofNullable(redisTemplate.opsForValue().get(redisKey))
@@ -188,7 +189,7 @@ public class ConcertService {
 
     public List<ConcertSummaryResponse> getPopularConcerts(int top) {
         Set<String> concertIdSet = redisTemplate.opsForZSet()
-                .reverseRange("concert:view:ranking", 0, top - 1);
+                .reverseRange(RedisKey.CONCERT_VIEW_RANKING, 0, top - 1);
 
         if (concertIdSet == null || concertIdSet.isEmpty()) {
             return Collections.emptyList();
