@@ -25,6 +25,9 @@ public class Concert extends BaseTimeEntity {
     private int availableAmount;
     private int viewCount = 0;
 
+    @Version
+    private Long version; // 낙관적 락
+
     @Builder
     public Concert(String title, String description, LocalDateTime concertDate, int capacity, int availableAmount, int viewCount) {
         this.title = title;
