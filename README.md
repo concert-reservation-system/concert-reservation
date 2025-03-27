@@ -23,12 +23,6 @@
 <img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/>
 
 ## ERD
-<<<<<<< HEAD
-<<<<<<< HEAD
-![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
-=======
-=======
->>>>>>> dev
 ![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
 
 ## 동시성 제어 & Lock 전략
@@ -55,7 +49,3 @@
 - AOP 구조로 락 적용 범위 통일
 - Redisson FairLock으로 요청 순서 보장
 - 동시성 테스트로 락의 유효성 검증
-<<<<<<< HEAD
->>>>>>> main
-=======
->>>>>>> dev
