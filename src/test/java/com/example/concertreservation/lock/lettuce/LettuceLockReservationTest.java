@@ -1,12 +1,12 @@
-package com.example.concertreservation.domain.reservation.optimistic;
+package com.example.concertreservation.lock.lettuce;
 
 import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
+import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
-import com.example.concertreservation.common.lock.optimistic.OptimisticReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -24,11 +24,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-public class OptimisticReservationTest {
-    // 낙관적 락 (Optimistic Lock)
+public class LettuceLockReservationTest {
+
+    @Autowired
+    private LettuceLockReservationFacade lettuceLockReservationFacade;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
@@ -37,8 +38,6 @@ public class OptimisticReservationTest {
     private ConcertReservationDateRepository concertReservationDateRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private OptimisticReservationService optimisticReservationService;
 
     public static final int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
@@ -83,19 +82,17 @@ public class OptimisticReservationTest {
 
     @Test
     public void 동시에_콘서트_예매_요청() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
-        AtomicInteger userCount = new AtomicInteger(1);
-        AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
+        AtomicInteger count = new AtomicInteger(1);
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    optimisticReservationService.createReservation(concert.getId(), (long) userCount.getAndIncrement());
-                } catch (Exception e) {
-                    // 낙관적 락 충돌 발생 시 처리 및 예외 카운트 증가
-                    optimisticLockExceptionCount.incrementAndGet();
+                    lettuceLockReservationFacade.create(concert.getId(), (long) count.getAndIncrement());
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 } finally {
                     latch.countDown();
                 }
@@ -105,12 +102,10 @@ public class OptimisticReservationTest {
         executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
+        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
-        assertTrue(optimisticLockExceptionCount.get() > 0);
         assertEquals(0, updatedConcert.getAvailableAmount());
-
-        System.out.println("*** 낙관적 락 발생한 예외 수: " + optimisticLockExceptionCount.get());
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
     }
+
 }

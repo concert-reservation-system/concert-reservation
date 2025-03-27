@@ -1,4 +1,4 @@
-package com.example.concertreservation.common.fairlock;
+package com.example.concertreservation.lock.redisson;
 
 import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
