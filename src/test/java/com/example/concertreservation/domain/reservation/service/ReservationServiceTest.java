@@ -1,6 +1,7 @@
-package com.example.concertreservation.domain.reservation;
+package com.example.concertreservation.domain.reservation.service;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,26 +25,27 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class LettuceLockReservationTest {
+class ReservationServiceTest {
 
     @Autowired
-    private LettuceLockReservationFacade lettuceLockReservationFacade;
+    private ReservationService reservationService;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
     private ConcertRepository concertRepository;
     @Autowired
-    private ConcertReservationDateRepository concertReservationDateRepository;
-    @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ConcertReservationDateRepository concertReservationDateRepository;
 
-    public static final int CAPACITY = 100;
+    public static int CAPACITY = 100;
     public static final int THREAD_COUNT = 1_000;
 
     private Concert concert;
+    private User user;
 
     @BeforeEach
     public void setUp() {
@@ -81,7 +84,7 @@ public class LettuceLockReservationTest {
     }
 
     @Test
-    public void 동시에_콘서트_예매_요청() throws InterruptedException {
+    void createAopReservation() throws InterruptedException{
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
@@ -90,9 +93,7 @@ public class LettuceLockReservationTest {
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    lettuceLockReservationFacade.create(concert.getId(), (long) count.getAndIncrement());
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
                 } finally {
                     latch.countDown();
                 }
@@ -107,5 +108,4 @@ public class LettuceLockReservationTest {
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());
     }
-
 }
