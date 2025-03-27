@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +20,8 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class LockReservationServiceConcurrencyTest {
+@ActiveProfiles("dev")
+public class LockReservationServiceTest {
 
     @Autowired
     private LockReservationService lockReservationService;
@@ -36,7 +38,7 @@ class LockReservationServiceConcurrencyTest {
     private Long concertId;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         reservationRepository.deleteAll();
         userRepository.deleteAll();
         concertRepository.deleteAll();
@@ -56,7 +58,7 @@ class LockReservationServiceConcurrencyTest {
 
     @Test
     @DisplayName("공정 락_동시에 여러 유저가 예약 시도하면 오직 1명만 성공한다")
-    void fairLock_동시성_예약_테스트() throws InterruptedException {
+    public void fairLock_동시성_예약_테스트() throws InterruptedException {
         int threadCount = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);

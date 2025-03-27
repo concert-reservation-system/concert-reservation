@@ -29,7 +29,6 @@ public class ReservationService {
     @Transactional
     public void createReservation(Long concertId, Long userId) {
         User user = userRepository.findById(userId)
-<<<<<<< HEAD
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Concert concert = concertRepository.findById(concertId)
@@ -37,19 +36,6 @@ public class ReservationService {
 
         if (reservationRepository.findByUserIdAndConcertId(userId, concertId).isPresent()) {
             throw new IllegalStateException("이미 이 콘서트를 예약했습니다.");
-=======
-                .orElseThrow(() -> new InvalidRequestException("해당 유저가 존재하지 않습니다."));
-
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 콘서트가 존재하지 않습니다."));
-
-        ConcertReservationDate reservationDate = concertReservationDateRepository
-                .findByConcertId(concert.getId())
-                .orElseThrow(() -> new InvalidRequestException("해당 공연의 예매 일정이 존재하지 않습니다."));
-
-        if (reservationDate.getStartDate().isAfter(LocalDateTime.now()) || reservationDate.getEndDate().isBefore(LocalDateTime.now())) {
-            throw new InvalidRequestException("콘서트 예약 기간이 아닙니다.");
->>>>>>> dev
         }
 
         if (concert.getAvailableAmount() == 0) {

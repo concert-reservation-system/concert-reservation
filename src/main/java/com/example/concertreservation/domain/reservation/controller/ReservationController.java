@@ -1,6 +1,6 @@
 package com.example.concertreservation.domain.reservation.controller;
 
-import com.example.concertreservation.common.fairlock.LockReservationService;
+import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
