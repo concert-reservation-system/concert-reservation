@@ -68,6 +68,7 @@ class ReservationServiceTest {
             });
         }
         latch.await();
+        executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
         System.out.println(CAPACITY + " 예약 가능, " + threadCount + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
