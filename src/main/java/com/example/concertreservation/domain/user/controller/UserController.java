@@ -21,7 +21,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserResponse> findUser(@PathVariable Long userId){
+    public ResponseEntity<UserResponse> findUser(@PathVariable Long userId) {
 
         return new ResponseEntity<>(userService.find(userId), HttpStatus.OK);
     }
@@ -31,18 +31,17 @@ public class UserController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
-    ){
+    ) {
 
-        return new ResponseEntity<>(userService.findAll(page, size, direction),HttpStatus.OK);
+        return new ResponseEntity<>(userService.findAll(page, size, direction), HttpStatus.OK);
     }
 
-    @PatchMapping("/users/{userId}")
+    @PatchMapping("/users")
     public ResponseEntity<Void> changePassword(
-            @PathVariable Long userId,
             @AuthenticationPrincipal AuthUser authUser,
-            @Valid ChangePasswordRequest request){
+            @Valid ChangePasswordRequest request) {
 
-        userService.changePassword(userId, authUser, request);
+        userService.changePassword(authUser.getId(), request);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -50,7 +49,7 @@ public class UserController {
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Long userId,
-            @AuthenticationPrincipal AuthUser authUser){
+            @AuthenticationPrincipal AuthUser authUser) {
 
         userService.deleteUser(authUser, userId);
 
