@@ -1,4 +1,4 @@
-package com.example.concertreservation.domain.reservation.controller;
+package com.example.concertreservation.domain.reservation.controller.v1;
 
 import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.domain.reservation.service.ReservationService;

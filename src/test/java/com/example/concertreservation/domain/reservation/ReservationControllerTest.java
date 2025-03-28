@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDateTime;
 
@@ -75,7 +74,6 @@ public class ReservationControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
     public void 콘서트_예약_요청() throws Exception {
         // 예약 요청 성공 테스트
         mockMvc.perform(post("/reservations/{concertId}", concert.getId()))
@@ -92,7 +90,6 @@ public class ReservationControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
     public void 비존재_콘서트_예약_요청() throws Exception {
         // 존재하지 않는 콘서트에 예약 시도
         Long fakeConcertId = 7777L;
