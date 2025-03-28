@@ -9,6 +9,7 @@ import com.example.concertreservation.domain.concert.repository.ConcertReservati
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 @SpringBootTest
 public class LettuceLockReservationTest {
 
@@ -107,7 +109,7 @@ public class LettuceLockReservationTest {
         executorService.shutdown();
 
         long endTime = System.currentTimeMillis();
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
+        log.info(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: {}ms", endTime - startTime);
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());

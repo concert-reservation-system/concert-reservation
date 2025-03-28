@@ -1,14 +1,15 @@
 package com.example.concertreservation.lock.pessimistic;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.common.lock.pessimistic.PessimisticReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
-import com.example.concertreservation.common.lock.pessimistic.PessimisticReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Slf4j
 @SpringBootTest
 public class PessimisticReservationTest {
     // 비관적 락(Pessimistic Lock)
@@ -110,7 +112,7 @@ public class PessimisticReservationTest {
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
+        log.info(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: {}ms", endTime - startTime);
     }
 
     @Test

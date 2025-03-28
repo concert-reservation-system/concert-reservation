@@ -10,6 +10,7 @@ import com.example.concertreservation.domain.concert.repository.ConcertReservati
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 @SpringBootTest
 public class OptimisticReservationTest {
     // 낙관적 락 (Optimistic Lock)
@@ -81,10 +83,10 @@ public class OptimisticReservationTest {
 
     @AfterEach
     public void tearDown() {
-//        reservationRepository.deleteAll();
-//        concertReservationDateRepository.deleteAll();
-//        concertRepository.deleteAll();
-//        userRepository.deleteAll();
+        reservationRepository.deleteAll();
+        concertReservationDateRepository.deleteAll();
+        concertRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test
@@ -115,21 +117,20 @@ public class OptimisticReservationTest {
 
         assertTrue(optimisticLockExceptionCount.get() > 0);
 
-        System.out.println("*** 낙관적 락 발생한 예외 수: " + optimisticLockExceptionCount.get());
-        System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
+        log.info("*** 낙관적 락 발생한 예외 수: {}", optimisticLockExceptionCount.get());
+        log.info(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: {}ms", endTime - startTime);
     }
 
     @Test
     @DisplayName("Optimistic lock 콘서트 예매 잔여 좌석 초과")
     public void optimistic_reservation_fail() throws InterruptedException {
-        int threadCount = CAPACITY + 1;
         ExecutorService executorService = Executors.newFixedThreadPool(10);
-        CountDownLatch latch = new CountDownLatch(threadCount);
+        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
         List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
 
         AtomicInteger userCount = new AtomicInteger(userId);
         AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
-        for (int i = 0; i < threadCount; i++) {
+        for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
                     optimisticReservationService.createReservation(concert.getId(), (long) userCount.getAndIncrement());
