@@ -3,8 +3,10 @@ package com.example.concertreservation.lock.redisson;
 import com.example.concertreservation.common.lock.redisson.LockRedissonManager;
 import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
+import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
+import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +44,9 @@ public class LockReservationServiceTest {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    @Autowired
+    private ConcertReservationDateRepository concertReservationDateRepository;
+
     private Long concertId;
 
     @BeforeEach
@@ -51,6 +57,12 @@ public class LockReservationServiceTest {
         concert.setAvailableAmount(1);
         concertRepository.save(concert);
         concertId = concert.getId();
+
+        ConcertReservationDate reservationDate = new ConcertReservationDate();
+        reservationDate.setConcert(concert);
+        reservationDate.setStartDate(LocalDateTime.now().minusMinutes(10));
+        reservationDate.setEndDate(LocalDateTime.now().plusMinutes(10));
+        concertReservationDateRepository.save(reservationDate);
 
         for (int i = 1; i <= 100; i++) {
             userRepository.save(new User("user" + i + "@test.com"));
