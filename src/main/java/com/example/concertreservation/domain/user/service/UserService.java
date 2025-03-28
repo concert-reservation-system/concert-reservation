@@ -65,11 +65,12 @@ public class UserService {
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new InvalidRequestException("존재하지 않는 회원입니다."));
 
-        if(!user.getId().equals(userId)){
+        if (!user.getId().equals(userId)) {
             throw new InvalidAuthenticationException("본인 계정이 아닙니다.");
         }
 
         userRepository.delete(user);
-        user.deleteUser();;
+        user.deleteUser();
+        ;
     }
 }

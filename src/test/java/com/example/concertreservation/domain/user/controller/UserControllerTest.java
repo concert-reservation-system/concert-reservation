@@ -4,8 +4,6 @@ import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.config.JwtUtil;
 import com.example.concertreservation.config.WithMockAuthUser;
-import com.example.concertreservation.domain.concert.entity.Concert;
-import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.user.dto.request.ChangePasswordRequest;
 import com.example.concertreservation.domain.user.dto.response.UserResponse;
 import com.example.concertreservation.domain.user.entity.User;
@@ -15,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,16 +22,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -44,15 +38,9 @@ class UserControllerTest {
     private MockMvc mockMvc;
     @Autowired
     ObjectMapper objectMapper;
-    @Autowired
-    PasswordEncoder passwordEncoder;
-    @Autowired
-    UserRepository userRepository;
 
     @MockBean
     private UserService userService;
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @BeforeEach
     public void setUp() {

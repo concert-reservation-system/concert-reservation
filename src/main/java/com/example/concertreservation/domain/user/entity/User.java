@@ -33,7 +33,7 @@ public class User extends BaseTimeEntity {
         this.userRole = userRole;
     }
 
-    public void deleteUser(){
+    public void deleteUser() {
         this.deletedAt = LocalDateTime.now();
     }
 
