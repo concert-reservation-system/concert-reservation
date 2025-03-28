@@ -7,12 +7,14 @@ import com.example.concertreservation.domain.reservation.repository.ReservationR
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class LockReservationProvider {
-
+    private static final Logger log = LoggerFactory.getLogger(LockRedissonManager.class);
     private final LockManager lockManager;
     private final ReservationRepository reservationRepository;
     private final ConcertRepository concertRepository;
@@ -26,7 +28,7 @@ public class LockReservationProvider {
                     .orElseThrow(() -> new IllegalStateException("해당 사용자가 존재하지 않습니다."));
 
             String lockKey = "concert:reservation:" + concertId;
-            System.out.println("락 획득 시도: concertId=" + concertId + ", userId=" + userId);
+            log.debug("락 획득 시도: concertId={}, userId={}", concertId, userId);
 
             try {
                 lockManager.executeWithLock(lockKey, () -> makeReservation(concert, user));
@@ -46,6 +48,6 @@ public class LockReservationProvider {
             reservation.setUser(user);
             reservation.setConcert(concert);
             reservationRepository.save(reservation);
-            System.out.println("예약 완료: concertId=" + concert.getId() + ", userId=" + user.getId());
+            log.info("예약 완료: concertId={}, userId={}", concert.getId(), user.getId());
         }
     }
