@@ -1,7 +1,8 @@
-package com.example.concertreservation.common.lock.pessimistic;
+package com.example.concertreservation.common.lock.aop;
 
 import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.example.concertreservation.common.exception.NotFoundException;
+import com.example.concertreservation.common.lock.aop.annotation.RedisLock;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -12,32 +13,32 @@ import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class PessimisticReservationService {
+public class RedisLockAspectService {
 
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final ConcertRepository concertRepository;
     private final ConcertReservationDateRepository concertReservationDateRepository;
 
-    @Transactional
-    public void createReservation(Long concertId, Long userId) {
+    @RedisLock(key = "#concertId")
+    public void createAopReservation(Long concertId, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("해당 유저가 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 유저가 존재하지 않습니다." + concertId));
 
-        Concert concert = concertRepository.findByIdWithPessimisticLock(concertId)
+        Concert concert = concertRepository.findById(concertId)
                 .orElseThrow(() -> new NotFoundException("해당 콘서트가 존재하지 않습니다."));
 
         ConcertReservationDate reservationDate = concertReservationDateRepository
                 .findByConcertId(concert.getId())
-                .orElseThrow(() -> new NotFoundException("해당 공연의 예매 일정이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
 
-        if (reservationDate.getStartDate().isAfter(LocalDateTime.now()) || reservationDate.getEndDate().isBefore(LocalDateTime.now())) {
+        if (reservationDate.getStartDate().isAfter(LocalDateTime.now()) ||
+                reservationDate.getEndDate().isBefore(LocalDateTime.now())) {
             throw new InvalidRequestException("콘서트 예약 기간이 아닙니다.");
         }
 
