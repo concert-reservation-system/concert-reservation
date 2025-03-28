@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Entity
@@ -25,5 +26,9 @@ public class User extends BaseTimeEntity {
         this.email = email;
         this.password = password;
         this.userRole = userRole;
+    }
+
+    public User(String email) {
+        this.email = email;
     }
 }

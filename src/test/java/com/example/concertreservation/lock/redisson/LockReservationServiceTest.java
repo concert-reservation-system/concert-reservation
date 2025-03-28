@@ -1,16 +1,21 @@
 package com.example.concertreservation.lock.redisson;
 
+import com.example.concertreservation.common.lock.redisson.LockRedissonManager;
 import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +24,10 @@ import java.util.concurrent.Executors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class LockReservationServiceConcurrencyTest {
+@ActiveProfiles("dev")
+public class LockReservationServiceTest {
+
+    private static final Logger log = LoggerFactory.getLogger(LockRedissonManager.class);
 
     @Autowired
     private LockReservationService lockReservationService;
@@ -36,28 +44,23 @@ class LockReservationServiceConcurrencyTest {
     private Long concertId;
 
     @BeforeEach
-    void setUp() {
-        reservationRepository.deleteAll();
-        userRepository.deleteAll();
-        concertRepository.deleteAll();
+    public void setUp() {
+        Concert concert = new Concert();
+        concert.setTitle("지디 콘서트");
+        concert.setCapacity(1);
+        concert.setAvailableAmount(1);
+        concertRepository.save(concert);
+        concertId = concert.getId();
 
-        Concert concert = Concert.builder()
-                .title("지디 콘서트")
-                .capacity(1)
-                .availableAmount(1)
-                .build();
-
-        concertId = concertRepository.save(concert).getId();
-
-        for (int i = 1; i <= 10; i++) {
-            userRepository.save(User.builder().email("user" + i + "@test.com").build());
+        for (int i = 1; i <= 100; i++) {
+            userRepository.save(new User("user" + i + "@test.com"));
         }
     }
 
     @Test
     @DisplayName("공정 락_동시에 여러 유저가 예약 시도하면 오직 1명만 성공한다")
-    void fairLock_동시성_예약_테스트() throws InterruptedException {
-        int threadCount = 10;
+    public void fairLock_동시성_예약_테스트() throws InterruptedException {
+        int threadCount = 100;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
@@ -66,6 +69,7 @@ class LockReservationServiceConcurrencyTest {
                 try {
                     lockReservationService.executeWithLock(concertId, user.getId());
                 } catch (Exception e) {
+                    log.warn("락 충돌: {}", e.getMessage());
                 } finally {
                     latch.countDown();
                 }
@@ -73,10 +77,10 @@ class LockReservationServiceConcurrencyTest {
         });
 
         latch.await();
-        Thread.sleep(200);
+        executorService.shutdown();
 
         // 예약은 1건만 성공해야 함!!!!
-        long successCount = reservationRepository.countByConcertId(concertId);
-        assertThat(successCount).isEqualTo(1);
+        long reservationSuccessCount = reservationRepository.countByConcertId(concertId);
+        assertThat(reservationSuccessCount).isEqualTo(1);
     }
 }
