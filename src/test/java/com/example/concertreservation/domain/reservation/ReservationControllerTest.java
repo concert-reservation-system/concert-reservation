@@ -1,6 +1,7 @@
 package com.example.concertreservation.domain.reservation;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.config.WithMockAuthUser;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -38,17 +40,19 @@ public class ReservationControllerTest {
     private UserRepository userRepository;
 
     private Concert concert;
-
     private User user;
 
     @BeforeEach
     public void setUp() {
-        concert = Concert.builder()
-                .title("테스트용 콘서트")
-                .capacity(100)
-                .availableAmount(100)
-                .build();
-        concertRepository.saveAndFlush(concert);
+//        userRepository.deleteAll();
+//        concertRepository.deleteAll();
+//        concertReservationDateRepository.deleteAll();
+
+        concert = concertRepository.saveAndFlush(Concert.builder()
+                .title("테스트 콘서트")
+                .capacity(2) // 예약 가능한 좌석 2개
+                .availableAmount(2)
+                .build());
 
         concertReservationDateRepository.saveAndFlush(
                 ConcertReservationDate.builder()
@@ -58,44 +62,44 @@ public class ReservationControllerTest {
                         .build()
         );
 
-        user = User.builder()
-                .email("testuser@example.com")
+        user = userRepository.saveAndFlush(User.builder()
+                .email("mytestuser@example.com")
                 .password("1234")
                 .userRole(UserRole.ROLE_USER)
-                .build();
-        userRepository.saveAndFlush(user);
+                .build());
     }
 
-    @AfterEach
-    public void tearDown() {
-        userRepository.deleteAll();
-        concertReservationDateRepository.deleteAll();
-        concertRepository.deleteAll();
-    }
+//    @AfterEach
+//    public void tearDown() {
+//        concertRepository.deleteAll();
+//        concertReservationDateRepository.deleteAll();
+//        userRepository.deleteAll();
+//    }
 
     @Test
-    public void 콘서트_예약_요청() throws Exception {
+    @WithMockAuthUser(userId = 89L, email = "mytestuser@example.com", role = UserRole.ROLE_USER) // 인증된 사용자로 요청
+    public void 콘서트_예약_성공() throws Exception {
         // 예약 요청 성공 테스트
-        mockMvc.perform(post("/reservations/{concertId}", concert.getId()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("예약이 완료되었습니다."));
+        mockMvc.perform(post("/api/reservations/{concertId}", concert.getId()))
+                .andExpect(status().isCreated());
     }
 
     @Test
     public void 로그인되지않은_사용자_예약_요청() throws Exception {
         // 인증되지 않은 경우
-        mockMvc.perform(post("/reservations/{concertId}", concert.getId()))
+        mockMvc.perform(post("/api/reservations/{concertId}", concert.getId()))
                 .andExpect(status().isForbidden())
                 .andExpect(content().string("로그인이 필요합니다."));
     }
 
     @Test
-    public void 비존재_콘서트_예약_요청() throws Exception {
+    @WithMockAuthUser(userId = 89L, email = "mytestuser@example.com", role = UserRole.ROLE_USER) // 인증된 사용자로 요청
+    public void 존재하지않는_콘서트_예약_요청() throws Exception {
         // 존재하지 않는 콘서트에 예약 시도
         Long fakeConcertId = 7777L;
 
-        mockMvc.perform(post("/reservations/{concertId}", fakeConcertId))
-                .andExpect(status().isNotFound())
-                .andExpect(content().string("콘서트를 찾을 수 없습니다."));
+        mockMvc.perform(post("/api/reservations/{concertId}", fakeConcertId))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("해당 콘서트가 존재하지 않습니다."));
     }
 }

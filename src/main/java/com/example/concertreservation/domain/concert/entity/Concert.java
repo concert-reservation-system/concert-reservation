@@ -5,10 +5,12 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @Table(name = "concerts")
@@ -24,6 +26,9 @@ public class Concert extends BaseTimeEntity {
     private int capacity;
     private int availableAmount;
     private int viewCount = 0;
+
+    @Version
+    private Long version; // 낙관적 락
 
     @Builder
     public Concert(String title, String description, LocalDateTime concertDate, int capacity, int availableAmount, int viewCount) {
@@ -44,6 +49,10 @@ public class Concert extends BaseTimeEntity {
     }
 
     public void decreaseAvailableAmount() {
-        this.availableAmount--;
+        if (this.availableAmount <= 0) {
+            String errorMessage = "잔여 수량이 없습니다.";
+            throw new IllegalStateException(errorMessage);
+        }
+        this.availableAmount -= 1;
     }
 }

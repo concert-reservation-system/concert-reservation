@@ -1,5 +1,6 @@
 package com.example.concertreservation.config;
 
+import com.example.concertreservation.common.exception.InvalidAuthenticationException;
 import com.example.concertreservation.common.exception.InvalidRequestException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -20,6 +21,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<Map<String, Object>> invalidRequestExceptionException(InvalidRequestException ex) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
+        return getErrorResponse(status, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidAuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidAuthenticationException(InvalidAuthenticationException ex) {
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
         return getErrorResponse(status, ex.getMessage());
     }
 

@@ -1,4 +1,4 @@
-package com.example.concertreservation.domain.reservation.repository;
+package com.example.concertreservation.common.lock.lettuce;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
