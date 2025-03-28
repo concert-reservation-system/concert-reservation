@@ -30,7 +30,7 @@ public class ConcertUpdateRequest {
     private LocalDateTime endDate;
 
     @Builder
-    private ConcertUpdateRequest(String title, String description, LocalDateTime concertDate,
+    public ConcertUpdateRequest(String title, String description, LocalDateTime concertDate,
                                  Integer capacity, LocalDateTime startDate, LocalDateTime endDate) {
         this.title = title;
         this.description = description;

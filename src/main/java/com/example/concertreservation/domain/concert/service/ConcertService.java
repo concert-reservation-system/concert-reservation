@@ -10,6 +10,7 @@ import com.example.concertreservation.domain.concert.entity.ConcertReservationDa
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.concert.util.RedisKey;
+import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,6 +37,7 @@ public class ConcertService {
     private final ConcertRepository concertRepository;
     private final ConcertReservationDateRepository concertReservationDateRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ReservationRepository reservationRepository;
 
     @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
@@ -117,6 +119,8 @@ public class ConcertService {
     @Transactional
     public void deleteConcert(Long concertId) {
         Concert concert = getConcertOrThrow(concertId);
+
+        reservationRepository.deleteByConcertId(concertId);
 
         // 콘서트 예매 일정 삭제
         concertReservationDateRepository.findByConcertId(concertId)

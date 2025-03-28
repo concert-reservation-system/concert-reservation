@@ -1,10 +1,12 @@
 package com.example.concertreservation.domain.reservation.controller;
 
+import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.reservation.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,13 +19,12 @@ public class ReservationController {
 
     @PostMapping("/{concertId}")
     public ResponseEntity<Void> reserveConcert(@PathVariable Long concertId,
-                                               @RequestParam Long userId) {
+                                               @AuthenticationPrincipal AuthUser authUser) {
         try {
-            lockReservationService.executeWithLock(concertId, userId);
+            lockReservationService.executeWithLock(concertId, authUser.getId());
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 }
-

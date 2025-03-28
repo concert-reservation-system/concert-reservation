@@ -9,4 +9,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Optional<Reservation> findByUserIdAndConcertId(Long userId, Long concertId);
 
     long countByConcertId(Long concertId);
+    void deleteByConcertId(Long concertId);
 }
