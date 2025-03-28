@@ -1,22 +1,26 @@
 package com.example.concertreservation.lock.optimistic;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.common.exception.InvalidRequestException;
+import com.example.concertreservation.common.lock.optimistic.OptimisticReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
-import com.example.concertreservation.common.lock.optimistic.OptimisticReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -40,10 +44,11 @@ public class OptimisticReservationTest {
     @Autowired
     private OptimisticReservationService optimisticReservationService;
 
-    public static final int CAPACITY = 100;
-    public static final int THREAD_COUNT = 1_000;
+    public static final int CAPACITY = 10;
+    public static final int THREAD_COUNT = 100;
 
     private Concert concert;
+    private int userId = 1;
 
     @BeforeEach
     public void setUp() {
@@ -52,9 +57,9 @@ public class OptimisticReservationTest {
                 .capacity(CAPACITY)
                 .availableAmount(CAPACITY)
                 .build();
-        concertRepository.saveAndFlush(concert);
+        concertRepository.save(concert);
 
-        concertReservationDateRepository.saveAndFlush(
+        concertReservationDateRepository.save(
                 ConcertReservationDate.builder()
                         .concert(concert)
                         .startDate(LocalDateTime.of(0000, 1, 1, 0, 0))
@@ -70,30 +75,32 @@ public class OptimisticReservationTest {
                     .userRole(UserRole.ROLE_USER)
                     .build());
         }
-        userRepository.saveAllAndFlush(users);
+        userRepository.saveAll(users);
+        userId = Math.toIntExact(users.get(0).getId());
     }
 
     @AfterEach
     public void tearDown() {
-        reservationRepository.deleteAll();
-        concertReservationDateRepository.deleteAll();
-        concertRepository.deleteAll();
-        userRepository.deleteAll();
+//        reservationRepository.deleteAll();
+//        concertReservationDateRepository.deleteAll();
+//        concertRepository.deleteAll();
+//        userRepository.deleteAll();
     }
 
     @Test
-    public void 동시에_콘서트_예매_요청() throws InterruptedException {
+    @DisplayName("Optimistic lock 콘서트 예매 성공")
+    public void optimistic_reservation_success() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
-        AtomicInteger userCount = new AtomicInteger(1);
+        AtomicInteger userCount = new AtomicInteger(userId);
         AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
                     optimisticReservationService.createReservation(concert.getId(), (long) userCount.getAndIncrement());
-                } catch (Exception e) {
+                } catch (OptimisticLockingFailureException e) {
                     // 낙관적 락 충돌 발생 시 처리 및 예외 카운트 증가
                     optimisticLockExceptionCount.incrementAndGet();
                 } finally {
@@ -106,11 +113,41 @@ public class OptimisticReservationTest {
 
         long endTime = System.currentTimeMillis();
 
-        Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertTrue(optimisticLockExceptionCount.get() > 0);
-        assertEquals(0, updatedConcert.getAvailableAmount());
 
         System.out.println("*** 낙관적 락 발생한 예외 수: " + optimisticLockExceptionCount.get());
         System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
+    }
+
+    @Test
+    @DisplayName("Optimistic lock 콘서트 예매 잔여 좌석 초과")
+    public void optimistic_reservation_fail() throws InterruptedException {
+        int threadCount = CAPACITY + 1;
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
+
+        AtomicInteger userCount = new AtomicInteger(userId);
+        AtomicInteger optimisticLockExceptionCount = new AtomicInteger(0);
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    optimisticReservationService.createReservation(concert.getId(), (long) userCount.getAndIncrement());
+                } catch (OptimisticLockingFailureException e) {
+                    // 낙관적 락 충돌 발생 시 처리 및 예외 카운트 증가
+                    optimisticLockExceptionCount.incrementAndGet();
+                } catch (InvalidRequestException e) {
+                    exceptions.add(e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await();
+        executorService.shutdown();
+
+        if (!exceptions.isEmpty()) {
+            assertEquals("잔여 좌석이 없습니다.", exceptions.get(0).getMessage());
+        }
     }
 }

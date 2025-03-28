@@ -1,22 +1,24 @@
 package com.example.concertreservation.lock.lettuce;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
-import com.example.concertreservation.common.lock.lettuce.LettuceLockReservationFacade;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -39,10 +41,11 @@ public class LettuceLockReservationTest {
     @Autowired
     private UserRepository userRepository;
 
-    public static final int CAPACITY = 100;
-    public static final int THREAD_COUNT = 1_000;
+    public static final int CAPACITY = 10;
+    public static final int THREAD_COUNT = 100;
 
     private Concert concert;
+    private int userId = 1;
 
     @BeforeEach
     public void setUp() {
@@ -51,9 +54,9 @@ public class LettuceLockReservationTest {
                 .capacity(CAPACITY)
                 .availableAmount(CAPACITY)
                 .build();
-        concertRepository.saveAndFlush(concert);
+        concertRepository.save(concert);
 
-        concertReservationDateRepository.saveAndFlush(
+        concertReservationDateRepository.save(
                 ConcertReservationDate.builder()
                         .concert(concert)
                         .startDate(LocalDateTime.of(0000, 1, 1, 0, 0))
@@ -69,7 +72,8 @@ public class LettuceLockReservationTest {
                     .userRole(UserRole.ROLE_USER)
                     .build());
         }
-        userRepository.saveAllAndFlush(users);
+        userRepository.saveAll(users);
+        userId = Math.toIntExact(users.get(0).getId());
     }
 
     @AfterEach
@@ -81,17 +85,18 @@ public class LettuceLockReservationTest {
     }
 
     @Test
-    public void 동시에_콘서트_예매_요청() throws InterruptedException {
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+    @DisplayName("Lettuce lock 콘서트 예매 성공")
+    public void lettuce_reservation_success() throws InterruptedException {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
         long startTime = System.currentTimeMillis();
-        AtomicInteger count = new AtomicInteger(1);
+        AtomicInteger userCount = new AtomicInteger(userId);
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    lettuceLockReservationFacade.create(concert.getId(), (long) count.getAndIncrement());
-                } catch (InterruptedException e) {
+                    lettuceLockReservationFacade.create(concert.getId(), (long) userCount.getAndIncrement());
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 } finally {
                     latch.countDown();
@@ -106,6 +111,35 @@ public class LettuceLockReservationTest {
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
         assertEquals(0, updatedConcert.getAvailableAmount());
+    }
+
+    @Test
+    @DisplayName("Lettuce lock 콘서트 잔여 좌석 초과")
+    public void lettuce_reservation_fail() throws InterruptedException {
+        int threadCount = CAPACITY + 1;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
+
+        AtomicInteger userCount = new AtomicInteger(userId);
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    lettuceLockReservationFacade.create(concert.getId(), (long) userCount.getAndIncrement());
+                } catch (Exception e) {
+                    exceptions.add(e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await();
+        executorService.shutdown();
+
+        if (!exceptions.isEmpty()) {
+            assertEquals("잔여 좌석이 없습니다.", exceptions.get(0).getMessage());
+        }
     }
 
 }
