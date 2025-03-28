@@ -40,11 +40,9 @@ class UserControllerTest {
     ObjectMapper objectMapper;
 
     @MockBean
+    private JwtUtil jwtUtil;
+    @MockBean
     private UserService userService;
-
-    @BeforeEach
-    public void setUp() {
-    }
 
     @Test
     @DisplayName("사용자 단일 조회")
