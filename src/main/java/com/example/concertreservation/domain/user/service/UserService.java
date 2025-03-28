@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,10 +43,10 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(Long userId, AuthUser authUser, ChangePasswordRequest request) {
+    public void changePassword(Long loginedId, ChangePasswordRequest request) {
 
-        User user = userRepository.findById(authUser.getId())
-                .orElseThrow(() -> new InvalidRequestException("존재하지 않는 회원입니다."));
+        User user = userRepository.findById(loginedId)
+                .orElseThrow(() -> new AccessDeniedException("본인의 계정이 아닙니다"));
 
         if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
             throw new InvalidRequestException("새 비밀번호는 기존 비밀번호와 같을 수 없습니다.");
@@ -55,7 +56,7 @@ public class UserService {
             throw new InvalidRequestException("잘못된 비밀번호입니다.");
         }
 
-//        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
+        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
     }
 
     @Transactional
@@ -64,11 +65,10 @@ public class UserService {
         User user = userRepository.findById(authUser.getId())
                 .orElseThrow(() -> new InvalidRequestException("존재하지 않는 회원입니다."));
 
-        if(!user.getId().equals(userId)){
+        if (!user.getId().equals(userId)) {
             throw new InvalidAuthenticationException("본인 계정이 아닙니다.");
         }
 
-//        userRepository.delete(user);
-//        user.deleteUser();;
+        userRepository.delete(user);
     }
 }

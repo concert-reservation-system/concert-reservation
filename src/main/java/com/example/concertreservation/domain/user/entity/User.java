@@ -24,7 +24,7 @@ public class User extends BaseTimeEntity {
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
-//    private LocalDateTime deletedAt = null;
+    private LocalDateTime deletedAt = null;
 
     @Builder
     public User(String email, String password, UserRole userRole) {
@@ -33,13 +33,13 @@ public class User extends BaseTimeEntity {
         this.userRole = userRole;
     }
 
-//    public void deleteUser(){
-//        this.deletedAt = LocalDateTime.now();
-//    }
+    public void deleteUser() {
+        this.deletedAt = LocalDateTime.now();
+    }
 
-//    public void changePassword(String password) {
-//        this.password = password;
-//    }
+    public void changePassword(String password) {
+        this.password = password;
+    }
 
     public User(String email) {
         this.email = email;

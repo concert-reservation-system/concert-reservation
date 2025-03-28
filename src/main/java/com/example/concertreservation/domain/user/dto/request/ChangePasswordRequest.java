@@ -10,4 +10,9 @@ public class ChangePasswordRequest {
     private String oldPassword;
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{4,}$")
     private String newPassword;
+
+    public ChangePasswordRequest(String oldPassword, String newPassword) {
+        this.oldPassword = oldPassword;
+        this.newPassword = newPassword;
+    }
 }
