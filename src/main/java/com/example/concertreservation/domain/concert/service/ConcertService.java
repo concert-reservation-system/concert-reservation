@@ -39,7 +39,7 @@ public class ConcertService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ReservationRepository reservationRepository;
 
-    @CacheEvict(value = "concertList", allEntries = true)
+    @CacheEvict(value = { "concertList", "concert:view:ranking" }, allEntries = true)
     @Transactional
     public ConcertResponse saveConcert(ConcertSaveRequest saveRequest) {
 
@@ -73,7 +73,7 @@ public class ConcertService {
         );
     }
 
-    @CacheEvict(value = "concertList", allEntries = true)
+    @CacheEvict(value = { "concertList", "concert:view:ranking" }, allEntries = true)
     @Transactional
     public ConcertResponse updateConcert(Long concertId, ConcertUpdateRequest request) {
         ConcertReservationDate reservationDate = getReservationDateWithConcertOrThrow(concertId);
@@ -115,7 +115,7 @@ public class ConcertService {
         );
     }
 
-    @CacheEvict(value = "concertList", allEntries = true)
+    @CacheEvict(value = { "concertList", "concert:view:ranking" }, allEntries = true)
     @Transactional
     public void deleteConcert(Long concertId) {
         Concert concert = getConcertOrThrow(concertId);
@@ -197,16 +197,15 @@ public class ConcertService {
                 .collect(Collectors.toMap(Concert::getId, Function.identity()));
 
         return concertIds.stream()
-                .map(id -> {
-                    Concert c = concertMap.get(id);
-                    return new ConcertSummaryResponse(
-                            c.getId(), c.getTitle(), c.getConcertDate()
-                    );
-                })
+                .map(concertMap::get)
+                .filter(Objects::nonNull)
+                .map(c -> new ConcertSummaryResponse(
+                        c.getId(), c.getTitle(), c.getConcertDate()
+                ))
                 .toList();
     }
 
-    @CacheEvict(value = "concertList", allEntries = true)
+    @CacheEvict(value = { "concertList", "concert:view:ranking" }, allEntries = true)
     @Transactional
     public void flushViewCountToDB() {
         Set<String> keys = redisTemplate.keys("concert:view:*");
