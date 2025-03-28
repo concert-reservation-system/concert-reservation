@@ -20,10 +20,7 @@ public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Email
-    @NotNull
     private String email;
-    @NotNull
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
