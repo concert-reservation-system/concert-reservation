@@ -2,12 +2,10 @@ package com.example.concertreservation.domain.concert.controller;
 
 import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.common.enums.UserRole;
-import com.example.concertreservation.domain.concert.dto.request.ConcertReservationPeriodRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertUpdateRequest;
 import com.example.concertreservation.domain.concert.dto.response.ConcertDetailResponse;
 import com.example.concertreservation.domain.concert.dto.response.ConcertResponse;
-import com.example.concertreservation.domain.concert.dto.response.ConcertSaveResponse;
 import com.example.concertreservation.domain.concert.dto.response.ConcertSummaryResponse;
 import com.example.concertreservation.domain.concert.service.ConcertService;
 import jakarta.validation.Valid;
@@ -30,7 +28,7 @@ public class ConcertController {
 
     @Secured(UserRole.Authority.ADMIN)
     @PostMapping()
-    public ResponseEntity<ConcertSaveResponse> saveConcert(
+    public ResponseEntity<ConcertResponse> saveConcert(
             @Valid @RequestBody ConcertSaveRequest concertSaveRequest
     ) {
         return ResponseEntity.ok(concertService.saveConcert(concertSaveRequest));
@@ -43,15 +41,6 @@ public class ConcertController {
             @PathVariable long concertId
     ) {
         return ResponseEntity.ok(concertService.updateConcert(concertId, concertUpdateRequest));
-    }
-
-    @Secured(UserRole.Authority.ADMIN)
-    @PatchMapping("/{concertId}/reservation-period")
-    public ResponseEntity<ConcertSaveResponse> updateReservationPeriod(
-            @Valid @RequestBody ConcertReservationPeriodRequest concertReservationPeriodRequest,
-            @PathVariable long concertId
-    ) {
-        return ResponseEntity.ok(concertService.updateReservationPeriod(concertId, concertReservationPeriodRequest));
     }
 
     @Secured(UserRole.Authority.ADMIN)

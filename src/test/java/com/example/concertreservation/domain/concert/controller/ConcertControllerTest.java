@@ -5,7 +5,7 @@ import com.example.concertreservation.common.enums.UserRole;
 import com.example.concertreservation.config.WithMockAuthUser;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
 import com.example.concertreservation.domain.concert.dto.response.ConcertDetailResponse;
-import com.example.concertreservation.domain.concert.dto.response.ConcertSaveResponse;
+import com.example.concertreservation.domain.concert.dto.response.ConcertResponse;
 import com.example.concertreservation.domain.concert.dto.response.ConcertSummaryResponse;
 import com.example.concertreservation.domain.concert.service.ConcertService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,7 +64,7 @@ class ConcertControllerTest {
                 .startDate(localDateTime)
                 .endDate(localDateTime)
                 .build();
-        ConcertSaveResponse response = ConcertSaveResponse.builder()
+        ConcertResponse response = ConcertResponse.builder()
                 .id(1L)
                 .title("title")
                 .description("description")

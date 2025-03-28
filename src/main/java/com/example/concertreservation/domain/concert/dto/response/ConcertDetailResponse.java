@@ -1,5 +1,6 @@
 package com.example.concertreservation.domain.concert.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -10,11 +11,14 @@ public class ConcertDetailResponse {
     private final Long id;
     private final String title;
     private final String description;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime concertDate;
     private final int capacity;
     private final int availableAmount;
     private final int viewCount;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private final LocalDateTime endDate;
 
     public ConcertDetailResponse(Long id, String title, String description, LocalDateTime concertDate, int capacity,
