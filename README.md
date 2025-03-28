@@ -1,4 +1,4 @@
-# PickT (Concert Ticketing Application)
+# PickT : Concert Ticketing Application
 대량 요청 속에서도 데이터 무결성과 정합성을 보장하는 콘서트 티켓팅 시스템
 
 ## Project Overview
