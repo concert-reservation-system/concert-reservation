@@ -26,8 +26,4 @@ public interface ConcertRepository extends JpaRepository<Concert, Long>, Concert
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Concert c SET c.viewCount = :viewCount WHERE c.id = :concertId")
     void updateViewCount(@Param("concertId") Long concertId, @Param("viewCount") int viewCount);
-
-    @Modifying
-    @Query("UPDATE Concert c SET c.availableAmount = c.availableAmount + :delta WHERE c.id = :concertId")
-    void updateAvailableAmount(@Param("concertId") Long concertId, @Param("delta") int delta);
 }
