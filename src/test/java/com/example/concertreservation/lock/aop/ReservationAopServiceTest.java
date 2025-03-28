@@ -83,8 +83,8 @@ class ReservationAopServiceTest {
     }
 
     @Test
-    @DisplayName("동시에 콘서트 최대 정원 수의 유저가 예약 시도하고 모두가 성공한다.")
-    public void aopLock_동시성_예약_테스트_성공() throws InterruptedException {
+    @DisplayName("동시에 콘서트 최대 정원 수의 유저가 예약 시도하고 일부만 성공한다.")
+    public void aopLock_동시성_예약_테스트_실패() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(100);
         CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
 
@@ -110,14 +110,14 @@ class ReservationAopServiceTest {
     }
 
     @Test
-    @DisplayName("동시에 콘서트 최대 정원 수의 유저가 예약 시도하고 일부는 실패한다.")
-    public void aopLock_동시성_예약_테스트_실패() throws InterruptedException {
+    @DisplayName("동시에 콘서트 최대 정원 수의 유저가 예약 시도하고 모두가 성공한다.")
+    public void aopLock_동시성_예약_테스트_성공() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(100);
-        CountDownLatch latch = new CountDownLatch(THREAD_COUNT);
+        CountDownLatch latch = new CountDownLatch(100);
 
         long startTime = System.currentTimeMillis();
         AtomicInteger count = new AtomicInteger(1);
-        for (int i = 0; i < THREAD_COUNT; i++) {
+        for (int i = 0; i < 100; i++) {
             executorService.submit(() -> {
                 try {
                     reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
@@ -133,6 +133,6 @@ class ReservationAopServiceTest {
         System.out.println(CAPACITY + " 예약 가능, " + THREAD_COUNT + "개 요청 처리 시간: " + (endTime - startTime) + "ms");
 
         Concert updatedConcert = concertRepository.findById(concert.getId()).get();
-        assertTrue(updatedConcert.getAvailableAmount() != 0, "남은 좌석 존재");
+        assertEquals(0, updatedConcert.getAvailableAmount(), "모든 좌석 예매 완료");
     }
 }
