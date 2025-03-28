@@ -70,7 +70,5 @@ public class UserService {
         }
 
         userRepository.delete(user);
-        user.deleteUser();
-        ;
     }
 }
