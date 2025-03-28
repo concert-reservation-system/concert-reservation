@@ -9,7 +9,6 @@ import java.util.Optional;
 
 public interface ConcertReservationDateRepository extends JpaRepository<ConcertReservationDate, Long>  {
     Optional<ConcertReservationDate> findByConcertId(Long concertId);
-
     @Query("SELECT d FROM ConcertReservationDate d JOIN FETCH d.concert WHERE d.concert.id = :concertId")
     Optional<ConcertReservationDate> findByConcertIdWithConcert(@Param("concertId") Long concertId);
 }
