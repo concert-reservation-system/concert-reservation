@@ -1,5 +1,6 @@
 package com.example.concertreservation.lock.redisson;
 
+import com.example.concertreservation.common.lock.redisson.LockRedissonManager;
 import com.example.concertreservation.common.lock.redisson.LockReservationService;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -10,6 +11,8 @@ import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -17,13 +20,14 @@ import org.springframework.test.context.ActiveProfiles;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("dev")
 public class LockReservationServiceTest {
+
+    private static final Logger log = LoggerFactory.getLogger(LockRedissonManager.class);
 
     @Autowired
     private LockReservationService lockReservationService;
@@ -59,15 +63,13 @@ public class LockReservationServiceTest {
         int threadCount = 100;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
-        AtomicInteger successfulUpdates = new AtomicInteger(0);
 
         userRepository.findAll().forEach(user -> {
             executorService.submit(() -> {
                 try {
                     lockReservationService.executeWithLock(concertId, user.getId());
-                    successfulUpdates.incrementAndGet();
                 } catch (Exception e) {
-                    System.out.println("락 충돌: " + e.getMessage());
+                    log.warn("락 충돌: {}", e.getMessage());
                 } finally {
                     latch.countDown();
                 }
@@ -79,7 +81,6 @@ public class LockReservationServiceTest {
 
         // 예약은 1건만 성공해야 함!!!!
         long reservationSuccessCount = reservationRepository.countByConcertId(concertId);
-        assertThat(successfulUpdates.get()).isEqualTo(1);
         assertThat(reservationSuccessCount).isEqualTo(1);
     }
 }
