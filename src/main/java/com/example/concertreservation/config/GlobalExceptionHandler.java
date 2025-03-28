@@ -2,6 +2,7 @@ package com.example.concertreservation.config;
 
 import com.example.concertreservation.common.exception.InvalidAuthenticationException;
 import com.example.concertreservation.common.exception.InvalidRequestException;
+import com.example.concertreservation.common.exception.NotFoundException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFoundException(NotFoundException e) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        return getErrorResponse(status, e.getMessage());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

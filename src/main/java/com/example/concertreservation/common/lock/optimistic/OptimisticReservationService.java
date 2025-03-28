@@ -1,6 +1,7 @@
 package com.example.concertreservation.common.lock.optimistic;
 
 import com.example.concertreservation.common.exception.InvalidRequestException;
+import com.example.concertreservation.common.exception.NotFoundException;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
@@ -27,14 +28,14 @@ public class OptimisticReservationService {
     @Transactional
     public void createReservation(Long concertId, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new InvalidRequestException("해당 유저가 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 유저가 존재하지 않습니다."));
 
         Concert concert = concertRepository.findByIdWithOptimisticLock(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 콘서트가 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 콘서트가 존재하지 않습니다."));
 
         ConcertReservationDate reservationDate = concertReservationDateRepository
                 .findByConcertId(concert.getId())
-                .orElseThrow(() -> new InvalidRequestException("해당 공연의 예매 일정이 존재하지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
 
         if (reservationDate.getStartDate().isAfter(LocalDateTime.now()) || reservationDate.getEndDate().isBefore(LocalDateTime.now())) {
             throw new InvalidRequestException("콘서트 예약 기간이 아닙니다.");

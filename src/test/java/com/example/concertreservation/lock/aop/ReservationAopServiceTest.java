@@ -1,12 +1,12 @@
 package com.example.concertreservation.lock.aop;
 
 import com.example.concertreservation.common.enums.UserRole;
+import com.example.concertreservation.common.lock.aop.RedisLockAspectService;
 import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
 import com.example.concertreservation.domain.reservation.repository.ReservationRepository;
-import com.example.concertreservation.domain.reservation.service.ReservationService;
 import com.example.concertreservation.domain.user.entity.User;
 import com.example.concertreservation.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -27,10 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class ReservationServiceTest {
+class ReservationAopServiceTest {
 
     @Autowired
-    private ReservationService reservationService;
+    private RedisLockAspectService reservationService;
     @Autowired
     private ReservationRepository reservationRepository;
     @Autowired
@@ -120,7 +120,7 @@ class ReservationServiceTest {
         for (int i = 0; i < THREAD_COUNT; i++) {
             executorService.submit(() -> {
                 try {
-                    reservationService.createReservation(concert.getId(), (long) count.getAndIncrement());
+                    reservationService.createAopReservation(concert.getId(), (long) count.getAndIncrement());
                 } finally {
                     latch.countDown();
                 }
