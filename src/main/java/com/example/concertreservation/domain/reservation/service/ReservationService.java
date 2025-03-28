@@ -54,7 +54,6 @@ public class ReservationService {
         concert.decreaseAvailableAmount();
     }
 
-    @Transactional
     @RedisLock(key = "#concertId")
     public void createAopReservation(Long concertId, Long userId) {
         User user = userRepository.findById(userId)
