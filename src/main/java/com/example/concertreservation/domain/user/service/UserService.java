@@ -29,7 +29,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new InvalidRequestException("존재하지 않는 회원입니다."));
 
-        return new UserResponse(user.getEmail());
+        return UserResponse.from(user);
     }
 
     @Transactional(readOnly = true)
@@ -38,9 +38,7 @@ public class UserService {
 
         Page<User> pages = userRepository.findAll(pageable);
 
-        return pages.map(user -> new UserResponse(
-                user.getEmail()
-        ));
+        return pages.map(UserResponse::from);
     }
 
     @Transactional
