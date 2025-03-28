@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidAuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidAuthenticationException(InvalidAuthenticationException ex) {
-        HttpStatus status = HttpStatus.FORBIDDEN;
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
         return getErrorResponse(status, ex.getMessage());
     }
 

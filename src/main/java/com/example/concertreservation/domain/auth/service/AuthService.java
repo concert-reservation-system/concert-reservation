@@ -45,7 +45,7 @@ public class AuthService {
 
     public SigninResponse signin(SigninRequest signinRequest) {
         User user = userRepository.findByEmail(signinRequest.getEmail()).orElseThrow(
-                () -> new InvalidRequestException("아이디 혹은 비밀번호가 일치하지 않습니다."));
+                () -> new InvalidAuthenticationException("아이디 혹은 비밀번호가 일치하지 않습니다."));
 
         // 로그인 시 이메일과 비밀번호가 일치하지 않을 경우 401을 반환합니다.
         if (!passwordEncoder.matches(signinRequest.getPassword(), user.getPassword())) {

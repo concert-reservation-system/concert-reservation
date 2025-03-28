@@ -3,7 +3,6 @@ package com.example.concertreservation.domain.auth.controller;
 import com.example.concertreservation.domain.auth.dto.request.SigninRequest;
 import com.example.concertreservation.domain.auth.dto.request.SignupRequest;
 import com.example.concertreservation.domain.auth.dto.response.SigninResponse;
-import com.example.concertreservation.domain.auth.dto.response.SignupResponse;
 import com.example.concertreservation.domain.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
