@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("dev")
-public class LockReservationServiceTest {
+public class LockReservationServiceSuccessTest {
 
     private static final Logger log = LoggerFactory.getLogger(LockRedissonManager.class);
 
