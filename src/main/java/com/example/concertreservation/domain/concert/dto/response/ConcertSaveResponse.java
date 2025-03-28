@@ -1,5 +1,6 @@
 package com.example.concertreservation.domain.concert.dto.response;
 
+import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class ConcertSaveResponse {
     private final LocalDateTime startDate;
     private final LocalDateTime endDate;
 
+    @Builder
     public ConcertSaveResponse(Long id, String title, String description, LocalDateTime concertDate, int capacity, LocalDateTime startDate, LocalDateTime endDate) {
         this.id = id;
         this.title = title;

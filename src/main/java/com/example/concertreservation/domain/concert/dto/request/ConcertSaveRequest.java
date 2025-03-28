@@ -36,7 +36,7 @@ public class ConcertSaveRequest {
     private LocalDateTime endDate;
 
     @Builder
-    private ConcertSaveRequest(String title, String description, LocalDateTime concertDate, int capacity, LocalDateTime startDate, LocalDateTime endDate) {
+    public ConcertSaveRequest(String title, String description, LocalDateTime concertDate, int capacity, LocalDateTime startDate, LocalDateTime endDate) {
         this.title = title;
         this.description = description;
         this.concertDate = concertDate;
