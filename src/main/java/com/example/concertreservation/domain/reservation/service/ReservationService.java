@@ -47,8 +47,8 @@ public class ReservationService {
                     throw new InvalidRequestException("이미 예약한 콘서트입니다.");
                 });
 
-        reservationRepository.save(new Reservation(user, concert));
         concert.decreaseAvailableAmount();
+        reservationRepository.save(new Reservation(user, concert));
     }
 
     @Transactional
