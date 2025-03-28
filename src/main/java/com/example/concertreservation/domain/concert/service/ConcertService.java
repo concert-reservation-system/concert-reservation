@@ -2,7 +2,6 @@ package com.example.concertreservation.domain.concert.service;
 
 import com.example.concertreservation.common.dto.AuthUser;
 import com.example.concertreservation.common.exception.InvalidRequestException;
-import com.example.concertreservation.domain.concert.dto.request.ConcertReservationPeriodRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertSaveRequest;
 import com.example.concertreservation.domain.concert.dto.request.ConcertUpdateRequest;
 import com.example.concertreservation.domain.concert.dto.response.*;
@@ -10,7 +9,9 @@ import com.example.concertreservation.domain.concert.entity.Concert;
 import com.example.concertreservation.domain.concert.entity.ConcertReservationDate;
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
 import com.example.concertreservation.domain.concert.repository.ConcertReservationDateRepository;
+import com.example.concertreservation.domain.concert.util.RedisKey;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,7 +39,7 @@ public class ConcertService {
 
     @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
-    public ConcertSaveResponse saveConcert(ConcertSaveRequest saveRequest) {
+    public ConcertResponse saveConcert(ConcertSaveRequest saveRequest) {
 
         // 콘서트 저장
         Concert newConcert = Concert.builder()
@@ -58,7 +60,7 @@ public class ConcertService {
                 .build();
         ConcertReservationDate savedReservationDate = concertReservationDateRepository.save(reservationDate);
 
-        return new ConcertSaveResponse(
+        return new ConcertResponse(
                 savedConcert.getId(),
                 savedConcert.getTitle(),
                 savedConcert.getDescription(),
@@ -71,13 +73,20 @@ public class ConcertService {
 
     @CacheEvict(value = "concertList", allEntries = true)
     @Transactional
-    public ConcertResponse updateConcert(Long concertId, ConcertUpdateRequest concertUpdateRequest) {
-        Concert concert = getConcertOrThrow(concertId);
+    public ConcertResponse updateConcert(Long concertId, ConcertUpdateRequest request) {
+        ConcertReservationDate reservationDate = getReservationDateWithConcertOrThrow(concertId);
+        Concert concert = reservationDate.getConcert();
+
+        // 업데이트할 필드 구분
+        String title = request.getTitle() != null ? request.getTitle() : concert.getTitle();
+        String description = request.getDescription() != null ? request.getDescription() : concert.getDescription();
+        LocalDateTime concertDate = request.getConcertDate() != null ? request.getConcertDate() : concert.getConcertDate();
 
         int oldCapacity = concert.getCapacity();
-        int newCapacity = concertUpdateRequest.getCapacity();
         int oldAvailableAmount = concert.getAvailableAmount();
+        int newCapacity = request.getCapacity() != null ? request.getCapacity() : oldCapacity;
 
+        // 정원 변경이 있을 경우 availableAmount 재계산
         int diff = newCapacity - oldCapacity;
         int newAvailableAmount = oldAvailableAmount + diff;
 
@@ -85,35 +94,15 @@ public class ConcertService {
             throw new InvalidRequestException("이미 예매된 좌석 수보다 적은 정원으로 변경할 수 없습니다.");
         }
 
-        concert.update(
-                concertUpdateRequest.getTitle(),
-                concertUpdateRequest.getDescription(),
-                concertUpdateRequest.getConcertDate(),
-                concertUpdateRequest.getCapacity(),
-                newAvailableAmount
-        );
+        // concert 업데이트
+        concert.update(title, description, concertDate, newCapacity, newAvailableAmount);
+
+        // reservationDate 업데이트 (startDate, endDate 둘 다 있어야 업데이트)
+        if (request.getStartDate() != null && request.getEndDate() != null) {
+            reservationDate.update(request.getStartDate(), request.getEndDate());
+        }
 
         return new ConcertResponse(
-                concert.getId(),
-                concert.getTitle(),
-                concert.getDescription(),
-                concert.getConcertDate(),
-                concert.getCapacity()
-        );
-    }
-
-    @Transactional
-    public ConcertSaveResponse updateReservationPeriod(Long concertId, ConcertReservationPeriodRequest concertReservationPeriodRequest) {
-        Concert concert = getConcertOrThrow(concertId);
-
-        ConcertReservationDate reservationDate = getReservationDateOrThrow(concertId);
-
-        reservationDate.update(
-                concertReservationPeriodRequest.getStartDate(),
-                concertReservationPeriodRequest.getEndDate()
-        );
-
-        return new ConcertSaveResponse(
                 concert.getId(),
                 concert.getTitle(),
                 concert.getDescription(),
@@ -145,14 +134,14 @@ public class ConcertService {
         Concert concert = reservationDate.getConcert();
 
         // 로그인 사용자 기준 어뷰징 방지
-        String userViewKey = "concert:view:user:" + concertId + ":" + authUser.getId();
+        String userViewKey = RedisKey.CONCERT_USER_VIEW + concertId + ":" + authUser.getId();
         boolean alreadyViewed = Boolean.TRUE.equals(redisTemplate.hasKey(userViewKey));
 
-        String redisKey = "concert:view:" + concertId;
+        String redisKey = RedisKey.CONCERT_VIEW_COUNT + concertId;
         if (!alreadyViewed) {
             redisTemplate.opsForValue().increment(redisKey);
             redisTemplate.opsForValue().set(userViewKey, "1", 12, TimeUnit.HOURS);
-            redisTemplate.opsForZSet().incrementScore("concert:view:ranking", concertId.toString(), 1);
+            redisTemplate.opsForZSet().incrementScore(RedisKey.CONCERT_VIEW_RANKING, concertId.toString(), 1);
         }
 
         int redisViewCount = Optional.ofNullable(redisTemplate.opsForValue().get(redisKey))
@@ -188,7 +177,7 @@ public class ConcertService {
 
     public List<ConcertSummaryResponse> getPopularConcerts(int top) {
         Set<String> concertIdSet = redisTemplate.opsForZSet()
-                .reverseRange("concert:view:ranking", 0, top - 1);
+                .reverseRange(RedisKey.CONCERT_VIEW_RANKING, 0, top - 1);
 
         if (concertIdSet == null || concertIdSet.isEmpty()) {
             return Collections.emptyList();
@@ -213,14 +202,54 @@ public class ConcertService {
                 .toList();
     }
 
+    @CacheEvict(value = "concertList", allEntries = true)
+    @Transactional
+    public void flushViewCountToDB() {
+        Set<String> keys = redisTemplate.keys("concert:view:*");
+
+        if (keys == null || keys.isEmpty()) {
+            log.info("조회수 반영할 Redis 키 없음");
+            return;
+        }
+
+        for (String key : keys) {
+            String keySuffix = key.replace("concert:view:", "");
+            // 숫자가 아닌 키는 스킵
+            if (!keySuffix.matches("\\d+")) {
+                log.warn("조회수 처리 대상 아님 - 무시된 Redis 키: {}", key);
+                continue;
+            }
+
+            try {
+                Long concertId = Long.parseLong(key.replace("concert:view:", ""));
+                String value = redisTemplate.opsForValue().get(key);
+
+                if (value == null) continue;
+
+                int redisViewCount = Integer.parseInt(value);
+                int currentViewCount = concertRepository.findViewCountById(concertId);
+                int totalViewCount = currentViewCount + redisViewCount;
+
+                concertRepository.updateViewCount(concertId, totalViewCount);
+
+                redisTemplate.delete(key);
+                redisTemplate.delete("concert:view:ranking");
+
+                log.info("조회수 DB 반영 완료 - concertId: {}, viewCount: {}", concertId, totalViewCount);
+            } catch (Exception e) {
+                log.error("조회수 DB 반영 실패 - key: {}", key, e);
+            }
+        }
+    }
+
     private Concert getConcertOrThrow(Long concertId) {
         return concertRepository.findById(concertId)
                 .orElseThrow(() -> new InvalidRequestException("해당 콘서트가 존재하지 않습니다."));
     }
 
-    private ConcertReservationDate getReservationDateOrThrow(Long concertId) {
+    private ConcertReservationDate getReservationDateWithConcertOrThrow(Long concertId) {
         return concertReservationDateRepository
-                .findByConcertId(concertId)
-                .orElseThrow(() -> new InvalidRequestException("해당 콘서트의 예매 일정이 존재하지 않습니다."));
+                .findByConcertIdWithConcert(concertId)
+                .orElseThrow(() -> new InvalidRequestException("해당 콘서트와 예매 일정이 존재하지 않습니다."));
     }
 }

@@ -1,6 +1,7 @@
 package com.example.concertreservation.domain.concert.scheduler;
 
 import com.example.concertreservation.domain.concert.repository.ConcertRepository;
+import com.example.concertreservation.domain.concert.service.ConcertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,38 +17,11 @@ import java.util.Set;
 @Component
 public class ViewCountSyncScheduler {
 
-    private final RedisTemplate<String, String> redisTemplate;
-    private final ConcertRepository concertRepository;
+    private final ConcertService concertService;
 
-    @CacheEvict(value = "concertList", allEntries = true)
-    @Transactional
     @Scheduled(cron = "0 0 0 * * *") // 매일 자정
-    public void flushViewCountToDB() {
-        Set<String> keys = redisTemplate.keys("concert:view:*");
-
-        if (keys.isEmpty()) {
-            log.info("조회수 반영할 Redis 키 없음");
-            return;
-        }
-
-        for (String key : keys) {
-            try {
-                Long concertId = Long.parseLong(key.replace("concert:view:", ""));
-                String value = redisTemplate.opsForValue().get(key);
-
-                if (value == null) continue;
-
-                int redisViewCount  = Integer.parseInt(value);
-                int currentViewCount = concertRepository.findViewCountById(concertId);
-                int totalViewCount = currentViewCount + redisViewCount;
-                concertRepository.updateViewCount(concertId, totalViewCount);
-
-                redisTemplate.delete(key);
-                redisTemplate.delete("concert:view:ranking");
-                log.info("조회수 DB 반영 완료 - concertId: {}, viewCount: {}", concertId, totalViewCount);
-            } catch (Exception e) {
-                log.error("조회수 DB 반영 실패 - key: {}", key, e);
-            }
-        }
+    public void runFlushViewCountJob() {
+        log.info("조회수 DB 반영 작업 시작");
+        concertService.flushViewCountToDB();
     }
 }

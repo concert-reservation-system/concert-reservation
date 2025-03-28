@@ -14,24 +14,29 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ConcertUpdateRequest {
 
-    @NotBlank
     private String title;
 
-    @NotBlank
     private String description;
 
-    @NotNull
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime concertDate;
 
-    @Min(value = 1)
-    private int capacity;
+    private Integer capacity;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime startDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime endDate;
 
     @Builder
-    private ConcertUpdateRequest(String title, String description, LocalDateTime concertDate, int capacity) {
+    private ConcertUpdateRequest(String title, String description, LocalDateTime concertDate,
+                                 Integer capacity, LocalDateTime startDate, LocalDateTime endDate) {
         this.title = title;
         this.description = description;
         this.concertDate = concertDate;
         this.capacity = capacity;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 }
