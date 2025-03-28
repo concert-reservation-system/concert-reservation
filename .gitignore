@@ -9,7 +9,8 @@ build/
 /src/main/generated/
 
 ### application.properties ###
-application-dev.properties
+application.properties
+application-local.properties
 
 ### STS ###
 .apt_generated
