@@ -1,5 +1,5 @@
 # PickT (Concert Ticketing Application)
-대량 요청 속에서도 데이터 정합성을 보장하는 콘서트 티켓팅 시스템
+대량 요청 속에서도 데이터 무결성과 정합성을 보장하는 콘서트 티켓팅 시스템
 
 ## Project Overview
 - 많은 사용자가 몰리는 상황에서도 티켓 수량 초과 없이 처리
@@ -21,16 +21,16 @@
 <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/>
 <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/>
 <img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/>
+<img src="https://img.shields.io/badge/Redis-6DB33F?style=flat-square&logo=Redis&logoColor=white"/>
 
 ## ERD
 ![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
 
-## 동시성 제어 & Lock 전략
-### 문제 상황
+## Concurrency Control & Lock
 - 콘서트 예약 시작 시간에 많은 요청이 동시에 몰릴 수 있음
 - 제어하지 않으면 오버셀링 , 중복 예매 , 데이터 무결성 문제 발생
 
-## Lock 전략 비교
+## Lock
 
 | Lock 방식 | 적용자 | 장점 | 단점 | 적용 이유 |
 |---|---|---|---|----|
@@ -42,11 +42,11 @@
 - 예매 순서가 중요한 서비스 -> 선착순 티켓팅
 - 대기 큐를 관리하며 요청 순서 보장
 
-## Redis Cache 활용
+## Redis Cache
 - 조회 성능 개선 (예약 가능한 콘서트 목록 등)
 - 만료시간 (TTL) 설정으로 데이터 최신성 보장
 
-## 기술적으로 해결한 문제
+## Technical Challenges Solved
 - Redis 기반 분산 락으로 재고 초과 문제 방지
 - AOP 구조로 락 적용 범위 통일
 - Redisson FairLock으로 요청 순서 보장
