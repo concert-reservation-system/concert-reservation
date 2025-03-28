@@ -34,7 +34,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<UserResponse> findAll(int page, int size, Sort.Direction direction) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, "creatAt"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, "createdAt"));
 
         Page<User> pages = userRepository.findAll(pageable);
 
