@@ -17,11 +17,7 @@
 | 김제인 | Redisson FairLock 적용 |
 
 ## Tech Stack
-<img src="https://img.shields.io/badge/java-007396?style=flat-square&logo=java&logoColor=white"/>
-<img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/>
-<img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/>
-<img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/>
-<img src="https://img.shields.io/badge/Redis-6DB33F?style=flat-square&logo=Redis&logoColor=white"/>
+<img src="https://img.shields.io/badge/java-007396?style=flat-square&logo=java&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/> <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/> <img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/> <img src="https://img.shields.io/badge/Redis-6DB33F?style=flat-square&logo=Redis&logoColor=white"/>
 
 ## ERD
 ![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
@@ -37,8 +33,8 @@
 | Lettuce 기반 Lock | 최유리 | 비동기 처리 가능, 구현 간단 | 공정성 없음 , Spin Lock 방식으로 CPU 자원이 많이 듬 | Redis 분산 락 테스트 목적 |
 | Spring AOP Lock | 김대정 | 횡단 관심사 분리 용이 | 단일 서버 환경에 적합 | 코드 구조화 , 진입 시점 통일 |
 | Redisson Fair Lock | 김제인 | 공정성 보장 (요청 순서대로 처리) , 안정성 높음 | 구현 복잡도 , 성능 저하 가능성 | 티켓팅처럼 순차적 처리가 중요한 서비스에 적합 |
-| Optimistic Lock | | 읽기 성능 우수, 락을 걸지 않음 | 대량의 쓰기 작업 시 비효율적, 분산환경 제한적 | 조회가 많고 충돌이 적은 환경 |
-| Pessimistic Lock | | 쓰기 성능 우수, 충돌 방지 | 트랜잭션 대기로 인한 성능 저하, 데드락 발생 가능 | 충돌이 빈번한 환경 |
+| Optimistic Lock | 최유리 | 읽기 성능 우수, 락을 걸지 않음 | 대량의 쓰기 작업 시 비효율적, 분산환경 제한적 | 조회가 많고 충돌이 적은 환경 |
+| Pessimistic Lock | 최유리 | 쓰기 성능 우수, 충돌 방지 | 트랜잭션 대기로 인한 성능 저하, 데드락 발생 가능 | 충돌이 빈번한 환경 |
 - 예매 순서가 중요한 서비스 -> 선착순 티켓팅
 - 대기 큐를 관리하며 요청 순서 보장
 
