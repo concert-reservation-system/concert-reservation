@@ -6,18 +6,18 @@
 - Redis 분산 락 / AOP / 테스트 코드를 통한 동시성 제어 구현
 - 캐싱/검색 최적화를 통한 성능 개선
 
-## Key Features
+## Tech Stack
+<img src="https://img.shields.io/badge/java-007396?style=flat-square&logo=java&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/> <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/> <img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/> <img src="https://img.shields.io/badge/Redis-6DB33F?style=flat-square&logo=Redis&logoColor=white"/>
 
-| 이름 | 담당 기능 |
+## Team Roles
+
+| Name | Role |
 |---|---|
 | 김한나 | 콘서트 등록/조회/수정/삭제 + JPA + QueryDSL + 캐시 성능 개선 |
 | 권호준 | 동시성 테스트 코드 작성 |
 | 김대정 | 회원가입/로그인 기능 + AOP 락 적용 |
 | 최유리 | Redis Lettuce 락 구현 및 동시성 이슈 제어 |
 | 김제인 | Redisson FairLock 적용 |
-
-## Tech Stack
-<img src="https://img.shields.io/badge/java-007396?style=flat-square&logo=java&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"/> <img src="https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=Postman&logoColor=white"/> <img src="https://img.shields.io/badge/Spring-6DB33F?style=flat-square&logo=Spring&logoColor=white"/> <img src="https://img.shields.io/badge/Redis-6DB33F?style=flat-square&logo=Redis&logoColor=white"/>
 
 ## ERD
 ![Image](https://github.com/user-attachments/assets/542b811f-1290-4928-86e5-c5de2748da3b)
